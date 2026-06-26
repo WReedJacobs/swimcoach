@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────
+   DEEPWATER — cyber-minimal performance theme.
+   Dark is the default (it's a dark-first identity).
+   Add  class="light"  to <html> to switch to the light variant.
+
+   All colors are space-separated RGB channels so Tailwind opacity
+   modifiers (bg-primary/10, focus:ring-primary/40, …) keep working.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --c-primary: 54 229 200;        /* electric chlorine aqua */
+  --c-primary-dark: 31 201 174;   /* hover */
+  --c-on-primary: 4 34 28;        /* dark ink on aqua fills */
+  --c-secondary: 31 185 140;      /* success green */
+  --c-accent: 245 183 72;         /* warning amber */
+  --c-danger: 255 92 92;
+  --c-coral: 255 122 69;          /* beginner mode */
+  --c-bg: 10 14 18;               /* abyssal canvas */
+  --c-surface: 17 22 29;          /* raised panel */
+  --c-border: 35 44 54;
+  --c-text-primary: 231 237 243;
+  --c-text-secondary: 138 151 166;
+  --c-text-muted: 90 102 117;
+  --shadow-glow: 0 8px 26px -10px rgb(54 229 200 / 0.5);
+  color-scheme: dark;
+}
+
+.light {
+  --c-primary: 20 195 170;
+  --c-primary-dark: 13 156 136;
+  --c-on-primary: 4 34 28;
+  --c-secondary: 14 159 122;
+  --c-accent: 194 135 15;
+  --c-danger: 220 61 61;
+  --c-coral: 226 89 42;
+  --c-bg: 233 238 241;
+  --c-surface: 255 255 255;
+  --c-border: 215 222 229;
+  --c-text-primary: 10 14 18;
+  --c-text-secondary: 70 82 95;
+  --c-text-muted: 138 151 166;
+  --shadow-glow: 0 8px 22px -10px rgb(20 195 170 / 0.4);
+  color-scheme: light;
+}
+
+@layer base {
+  html {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+  }
+  body {
+    @apply bg-bg text-text-primary antialiased;
+  }
+  /* Tabular figures for the data-dense numerals this app is full of. */
+  .tabular,
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Skeleton loader shimmer */
+  .skeleton {
+    @apply animate-pulse rounded bg-border/70;
+  }
+  /* Soft accent glow under primary actions */
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DEEPWATER motion system (Workstream 2) — entrance keyframes.
+   Cursor/scroll/tilt motion is driven by hooks in src/hooks/*;
+   these keyframes cover the hero's entrance + ambient animations.
+   All are disabled under prefers-reduced-motion below.
+   ───────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes ringIn {
+  from { stroke-dashoffset: 314; }
+}
+@keyframes drift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@layer utilities {
+  .animate-fade-up {
+    animation: fadeUp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease both;
+  }
+  .animate-ring-in {
+    animation: ringIn 1.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .animate-drift {
+    animation: drift 7s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Hide number input spinners for time entry fields */
+input[type='number'].no-spin::-webkit-outer-spin-button,
+input[type='number'].no-spin::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'].no-spin {
+  -moz-appearance: textfield;
+}
