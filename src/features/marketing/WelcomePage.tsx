@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCursorFx } from '@/hooks/useCursorFx'
 import { useTilt } from '@/hooks/useTilt'
@@ -96,9 +96,12 @@ export function WelcomePage() {
   // Signed-in visitors land on the hero too, so route them onward to their
   // own portal instead of bouncing through /login.
   const dashboardPath = isAuthenticated && profile?.role ? `/${profile.role}` : null
-  // Logged-out visitors enter the anonymous onboarding flow (build first,
-  // sign up at save); signed-in visitors jump to their dashboard.
   const primaryTo = dashboardPath ?? '/start'
+
+  // Redirect authenticated users away from the landing page immediately
+  useEffect(() => {
+    if (dashboardPath) navigate(dashboardPath, { replace: true })
+  }, [dashboardPath, navigate])
   // Halo + lead dot are rendered app-wide by <CursorFxLayer>; here we only
   // need the grid-parallax and magnetic-CTA refs from the same loop.
   const { gridRef, magneticRef } = useCursorFx()

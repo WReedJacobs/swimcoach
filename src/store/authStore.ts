@@ -53,8 +53,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signIn: async (email, password) => {
     set({ loading: true })
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
+      // Fetch profile immediately so callers can read the role right after awaiting signIn
+      if (data.user) {
+        const profile = await fetchProfile(data.user.id)
+        set({ profile })
+      }
     } finally {
       set({ loading: false })
     }

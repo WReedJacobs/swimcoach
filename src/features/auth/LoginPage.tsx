@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/store/authStore'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -26,11 +27,16 @@ export function LoginPage() {
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
+  const redirectAfterLogin = () => {
+    const { profile } = useAuthStore.getState()
+    navigate(profile?.role ? `/${profile.role}` : '/')
+  }
+
   const onSubmit = async (values: FormValues) => {
     setServerError(null)
     try {
       await signIn(values.email, values.password)
-      navigate('/')
+      redirectAfterLogin()
     } catch (err) {
       setServerError(err instanceof Error ? err.message : 'Sign in failed')
     }
@@ -40,7 +46,7 @@ export function LoginPage() {
     setServerError(null)
     try {
       await signIn(email, 'demo')
-      navigate('/')
+      redirectAfterLogin()
     } catch (err) {
       setServerError(err instanceof Error ? err.message : 'Sign in failed')
     }
