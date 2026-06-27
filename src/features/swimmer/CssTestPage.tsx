@@ -8,6 +8,7 @@ import { StatTile } from '@/components/ui/StatTile'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useMySwimmer } from '@/hooks/useMySwimmer'
+import { useMyCssResult, useSaveCssResult } from '@/hooks/useCssResults'
 import { formatTime, parseTime } from '@/lib/formatTime'
 import {
   calculateCss,
@@ -23,13 +24,14 @@ interface StoredTrial {
   t200: number
 }
 
-/** Distances we show a CSS-pace target for at a glance. */
 const PACE_DISTANCES = [50, 100, 200, 400]
 
 export function CssTestPage() {
   const { data: swimmer } = useMySwimmer()
-  // Persist the trial locally so it works without a Supabase round-trip,
-  // keyed per swimmer (falls back to a shared key when unauthenticated).
+  const { data: dbResult } = useMyCssResult()
+  const saveCssResult = useSaveCssResult()
+
+  // localStorage fallback for offline / pre-account use
   const [stored, setStored] = useLocalStorage<StoredTrial | null>(
     `swimcoach:css:${swimmer?.id ?? 'me'}`,
     null,
@@ -44,57 +46,82 @@ export function CssTestPage() {
     longSecs != null && shortSecs != null ? calculateCss(longSecs, shortSecs) : null
   const canSave = previewCss != null
 
-  const save = () => {
-    if (longSecs == null || shortSecs == null || !canSave) return
+  const save = async () => {
+    if (longSecs == null || shortSecs == null || !canSave || !previewCss) return
+    // Always update localStorage for offline access
     setStored({ t400: longSecs, t200: shortSecs })
+    // Sync to Supabase when swimmer is linked
+    if (swimmer?.id) {
+      await saveCssResult.mutateAsync({
+        swimmer_id: swimmer.id,
+        t400: longSecs,
+        t200: shortSecs,
+        pace_per_100: previewCss.pacePer100,
+      })
+    }
     setLong('')
     setShort('')
   }
 
-  const css = stored ? calculateCss(stored.t400, stored.t200) : null
+  // Supabase is the source of truth; fall back to localStorage
+  const activeResult: StoredTrial | null = dbResult
+    ? { t400: dbResult.t400, t200: dbResult.t200 }
+    : stored
+
+  const css = activeResult ? calculateCss(activeResult.t400, activeResult.t200) : null
 
   return (
     <div className="space-y-8">
       <div>
-      <SectionHeader kicker="Test" />
-      <Card>
-        <CardHeader
-          title="Critical Swim Speed test"
-          subtitle={`Swim an all-out ${CSS_LONG}m and ${CSS_SHORT}m, then enter your times. CSS is the pace your training sets are built around.`}
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label={`${CSS_LONG}m time`}
-            placeholder="5:00.0"
-            value={long}
-            onChange={(e) => setLong(e.target.value)}
-            error={long.length > 0 && longSecs == null ? 'Invalid time' : undefined}
+        <SectionHeader kicker="Test" />
+        <Card>
+          <CardHeader
+            title="Critical Swim Speed test"
+            subtitle={`Swim an all-out ${CSS_LONG}m and ${CSS_SHORT}m, then enter your times. CSS is the pace your training sets are built around.`}
           />
-          <Input
-            label={`${CSS_SHORT}m time`}
-            placeholder="2:25.0"
-            value={short}
-            onChange={(e) => setShort(e.target.value)}
-            error={short.length > 0 && shortSecs == null ? 'Invalid time' : undefined}
-          />
-        </div>
-        {longSecs != null && shortSecs != null && !previewCss && (
-          <p className="mt-3 flex items-center gap-1.5 text-xs text-danger">
-            <Info className="h-4 w-4" />
-            Your {CSS_LONG}m time must be slower than your {CSS_SHORT}m time.
-          </p>
-        )}
-        <div className="mt-4 flex items-center gap-3">
-          <Button leftIcon={<Save className="h-4 w-4" />} disabled={!canSave} onClick={save}>
-            Save CSS
-          </Button>
-          {previewCss && (
-            <p className="text-sm text-text-secondary">
-              ≈ <span className="font-semibold text-text-primary">{formatTime(previewCss.pacePer100)}</span> / 100m
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label={`${CSS_LONG}m time`}
+              placeholder="5:00.0"
+              value={long}
+              onChange={(e) => setLong(e.target.value)}
+              error={long.length > 0 && longSecs == null ? 'Invalid time' : undefined}
+            />
+            <Input
+              label={`${CSS_SHORT}m time`}
+              placeholder="2:25.0"
+              value={short}
+              onChange={(e) => setShort(e.target.value)}
+              error={short.length > 0 && shortSecs == null ? 'Invalid time' : undefined}
+            />
+          </div>
+          {longSecs != null && shortSecs != null && !previewCss && (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-danger">
+              <Info className="h-4 w-4" />
+              Your {CSS_LONG}m time must be slower than your {CSS_SHORT}m time.
             </p>
           )}
-        </div>
-      </Card>
+          <div className="mt-4 flex items-center gap-3">
+            <Button
+              leftIcon={<Save className="h-4 w-4" />}
+              disabled={!canSave}
+              loading={saveCssResult.isPending}
+              onClick={save}
+            >
+              Save CSS
+            </Button>
+            {previewCss && (
+              <p className="text-sm text-text-secondary">
+                ≈ <span className="font-semibold text-text-primary">{formatTime(previewCss.pacePer100)}</span> / 100m
+              </p>
+            )}
+          </div>
+          {dbResult && (
+            <p className="mt-2 text-xs text-text-muted">
+              Last saved {new Date(dbResult.recorded_at).toLocaleDateString()} · visible to your coach
+            </p>
+          )}
+        </Card>
       </div>
 
       {!css ? (
@@ -121,74 +148,74 @@ export function CssTestPage() {
               />
               <StatTile
                 label="From trial"
-                value={`${formatTime(stored!.t400)} / ${formatTime(stored!.t200)}`}
+                value={`${formatTime(activeResult!.t400)} / ${formatTime(activeResult!.t200)}`}
                 hint={`${CSS_LONG}m · ${CSS_SHORT}m`}
               />
             </div>
           </div>
 
           <div>
-          <SectionHeader kicker="Pace" />
-          <Card>
-            <CardHeader title="Pace targets at CSS" subtitle="What threshold pace looks like across distances" />
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {PACE_DISTANCES.map((d) => (
-                <div key={d} className="rounded-component bg-bg p-3 text-center">
-                  <p className="text-xs font-medium uppercase tracking-wide text-text-muted">{d}m</p>
-                  <p className="mt-1 font-mono text-lg font-semibold text-text-primary">
-                    {formatTime(paceForDistance(css.pacePer100, d) ?? 0)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </Card>
-          </div>
-
-          <div>
-          <SectionHeader kicker="Zones" />
-          <Card>
-            <CardHeader
-              title="Training zones"
-              subtitle="Pace per 100m for each effort, relative to your CSS"
-            />
-            <div className="space-y-1">
-              {PACE_ZONES.map((z) => {
-                const target = paceForDistance(css.pacePer100, 100, z.offsetPer100)
-                const sign = z.offsetPer100 > 0 ? `+${z.offsetPer100}` : z.offsetPer100 === 0 ? '±0' : `${z.offsetPer100}`
-                return (
-                  <div
-                    key={z.key}
-                    className="flex items-center justify-between rounded-component px-3 py-2 text-sm odd:bg-bg"
-                  >
-                    <span className="font-medium text-text-primary">{z.label}</span>
-                    <span className="text-text-secondary">
-                      CSS {sign}s · <span className="font-mono font-semibold text-text-primary">{formatTime(target ?? 0)}</span> /100m
-                    </span>
+            <SectionHeader kicker="Pace" />
+            <Card>
+              <CardHeader title="Pace targets at CSS" subtitle="What threshold pace looks like across distances" />
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {PACE_DISTANCES.map((d) => (
+                  <div key={d} className="rounded-component bg-bg p-3 text-center">
+                    <p className="text-xs font-medium uppercase tracking-wide text-text-muted">{d}m</p>
+                    <p className="mt-1 font-mono text-lg font-semibold text-text-primary">
+                      {formatTime(paceForDistance(css.pacePer100, d) ?? 0)}
+                    </p>
                   </div>
-                )
-              })}
-            </div>
-          </Card>
+                ))}
+              </div>
+            </Card>
           </div>
 
           <div>
-          <SectionHeader kicker="Sample set" />
-          <Card>
-            <CardHeader title="Sample threshold set" subtitle="Built from your CSS, at CSS+2 with ~15s rest" />
-            {(() => {
-              const set = buildSetTarget(css.pacePer100, 8, 100, 2, 15)
-              if (!set) return null
-              return (
-                <p className="text-sm text-text-primary">
-                  <span className="font-semibold">
-                    {set.reps} × {set.distance}m
-                  </span>{' '}
-                  @ {formatTime(set.repSeconds)} — leave on{' '}
-                  <span className="font-semibold">{formatTime(set.sendOffSeconds)}</span>
-                </p>
-              )
-            })()}
-          </Card>
+            <SectionHeader kicker="Zones" />
+            <Card>
+              <CardHeader
+                title="Training zones"
+                subtitle="Pace per 100m for each effort, relative to your CSS"
+              />
+              <div className="space-y-1">
+                {PACE_ZONES.map((z) => {
+                  const target = paceForDistance(css.pacePer100, 100, z.offsetPer100)
+                  const sign = z.offsetPer100 > 0 ? `+${z.offsetPer100}` : z.offsetPer100 === 0 ? '±0' : `${z.offsetPer100}`
+                  return (
+                    <div
+                      key={z.key}
+                      className="flex items-center justify-between rounded-component px-3 py-2 text-sm odd:bg-bg"
+                    >
+                      <span className="font-medium text-text-primary">{z.label}</span>
+                      <span className="text-text-secondary">
+                        CSS {sign}s · <span className="font-mono font-semibold text-text-primary">{formatTime(target ?? 0)}</span> /100m
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+          </div>
+
+          <div>
+            <SectionHeader kicker="Sample set" />
+            <Card>
+              <CardHeader title="Sample threshold set" subtitle="Built from your CSS, at CSS+2 with ~15s rest" />
+              {(() => {
+                const set = buildSetTarget(css.pacePer100, 8, 100, 2, 15)
+                if (!set) return null
+                return (
+                  <p className="text-sm text-text-primary">
+                    <span className="font-semibold">
+                      {set.reps} × {set.distance}m
+                    </span>{' '}
+                    @ {formatTime(set.repSeconds)} — leave on{' '}
+                    <span className="font-semibold">{formatTime(set.sendOffSeconds)}</span>
+                  </p>
+                )
+              })()}
+            </Card>
           </div>
         </>
       )}

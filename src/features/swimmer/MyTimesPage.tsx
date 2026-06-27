@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Timer, Trophy, Plus, Trash2 } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
@@ -13,6 +13,14 @@ import { formatTime, parseTime } from '@/lib/formatTime'
 import { STROKES, DISTANCES } from '@/types'
 import type { Stroke, SwimTime } from '@/types'
 
+interface EventGroup {
+  key: string
+  distance: number
+  stroke: string
+  times: SwimTime[]
+  pb: SwimTime | null
+}
+
 export function MyTimesPage() {
   const { data: swimmer } = useMySwimmer()
   const { data: times } = useTimes(swimmer?.id)
@@ -24,6 +32,25 @@ export function MyTimesPage() {
   const [distance, setDistance] = useState(100)
   const [raw, setRaw] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<SwimTime | null>(null)
+
+  const groups = useMemo<EventGroup[]>(() => {
+    const map = new Map<string, EventGroup>()
+    for (const t of times ?? []) {
+      const key = `${t.distance}-${t.stroke}`
+      if (!map.has(key)) {
+        map.set(key, { key, distance: t.distance, stroke: t.stroke, times: [], pb: null })
+      }
+      const g = map.get(key)!
+      g.times.push(t)
+    }
+    for (const g of map.values()) {
+      g.pb = g.times.reduce<SwimTime | null>(
+        (best, t) => (!best || t.time_seconds < best.time_seconds ? t : best),
+        null,
+      )
+    }
+    return [...map.values()].sort((a, b) => a.distance - b.distance || a.stroke.localeCompare(b.stroke))
+  }, [times])
 
   const save = async () => {
     const seconds = parseTime(raw)
@@ -41,52 +68,62 @@ export function MyTimesPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <SectionHeader
-          kicker="Times"
-          action={
-            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setOpen(true)} disabled={!swimmer}>
-              Log a time
-            </Button>
-          }
-        />
+      <SectionHeader
+        kicker="Times"
+        action={
+          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setOpen(true)} disabled={!swimmer}>
+            Log a time
+          </Button>
+        }
+      />
 
+      {groups.length === 0 ? (
         <Card>
-          <CardHeader title="My times" subtitle="Self-logged times are flagged for your coach" />
-          {(times ?? []).length === 0 ? (
-            <EmptyState icon={<Timer className="h-6 w-6" />} title="No times yet" description="Log your first time to start tracking progress." />
-          ) : (
-            <ul className="divide-y divide-border">
-              {(times ?? []).map((t) => (
-                <li key={t.id} className="group flex items-center justify-between py-2.5 text-sm">
-                  <div>
-                    <span className="font-medium capitalize text-text-primary">{t.distance}m {t.stroke}</span>
-                    <span className="ml-2 text-xs text-text-muted">
+          <EmptyState icon={<Timer className="h-6 w-6" />} title="No times yet" description="Log your first time to start tracking progress." />
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {groups.map((g) => (
+            <Card key={g.key}>
+              <CardHeader
+                title={`${g.distance}m ${g.stroke.charAt(0).toUpperCase()}${g.stroke.slice(1)}`}
+                action={
+                  g.pb ? (
+                    <span className="flex items-center gap-1 rounded-component bg-accent/10 px-2.5 py-1 text-xs font-mono font-semibold tabular-nums text-accent">
+                      <Trophy className="h-3 w-3" /> PB {formatTime(g.pb.time_seconds)}
+                    </span>
+                  ) : null
+                }
+              />
+              <ul className="divide-y divide-border">
+                {g.times.map((t) => (
+                  <li key={t.id} className="group flex items-center justify-between py-2.5 text-sm">
+                    <span className="font-mono text-xs tabular-nums text-text-muted">
                       {new Date(t.recorded_at).toLocaleDateString()}
                       {t.is_self_logged && ' · self-logged'}
                     </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {t.is_pb && (
-                      <Badge tone="amber">
-                        <Trophy className="mr-1 h-3 w-3" /> PB
-                      </Badge>
-                    )}
-                    <span className="font-mono font-medium text-text-primary">{formatTime(t.time_seconds)}</span>
-                    <button
-                      onClick={() => setConfirmDelete(t)}
-                      className="hidden rounded p-1 text-text-muted hover:text-danger group-hover:flex"
-                      title="Delete time"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
+                    <div className="flex items-center gap-2">
+                      {t.is_pb && (
+                        <Badge tone="amber">
+                          <Trophy className="mr-1 h-3 w-3" /> PB
+                        </Badge>
+                      )}
+                      <span className="font-mono font-medium text-text-primary">{formatTime(t.time_seconds)}</span>
+                      <button
+                        onClick={() => setConfirmDelete(t)}
+                        className="hidden rounded p-1 text-text-muted hover:text-danger group-hover:flex"
+                        title="Delete time"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Modal open={open} onClose={() => setOpen(false)} title="Log a time">
         <div className="space-y-4">
@@ -116,11 +153,10 @@ export function MyTimesPage() {
         </div>
       </Modal>
 
-      {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setConfirmDelete(null)}>
-          <div className="w-full max-w-sm rounded-card bg-surface p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="font-semibold text-text-primary">Delete this time?</p>
-            <p className="mt-1 text-sm text-text-secondary">
+      <Modal open={confirmDelete !== null} onClose={() => setConfirmDelete(null)} title="Delete this time?">
+        {confirmDelete && (
+          <>
+            <p className="text-sm text-text-secondary">
               {confirmDelete.distance}m {confirmDelete.stroke} — {formatTime(confirmDelete.time_seconds)} on{' '}
               {new Date(confirmDelete.recorded_at).toLocaleDateString()}
             </p>
@@ -137,9 +173,9 @@ export function MyTimesPage() {
                 Delete
               </Button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   )
 }

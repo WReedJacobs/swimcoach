@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Trophy, Save, Plus, Timer, Table, Search } from 'lucide-react'
+import { Trophy, Save, Plus, Timer, Table, Search, Gauge } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
@@ -11,14 +11,43 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { formatTime, parseTime } from '@/lib/formatTime'
 import { useSwimmers } from '@/hooks/useSwimmers'
+import { useSessions } from '@/hooks/useSessions'
 import { useLogTime } from '@/hooks/useTimes'
+import { useCssResultForSwimmer } from '@/hooks/useCssResults'
 import { STROKES, DISTANCES, swimmerName } from '@/types'
 import type { Stroke, Swimmer } from '@/types'
 
 type Mode = 'stopwatch' | 'bulk'
 
+/** Dropdown of sessions from the last 60 days, with a "None" option. */
+function SessionPicker({
+  sessions,
+  value,
+  onChange,
+}: {
+  sessions: { id: string; title: string; date: string }[]
+  value: string
+  onChange: (id: string) => void
+}) {
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - 60)
+  const recent = sessions.filter((s) => new Date(s.date) >= cutoff)
+
+  return (
+    <Select label="Link to session (optional)" value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">No session</option>
+      {recent.map((s) => (
+        <option key={s.id} value={s.id}>
+          {new Date(s.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {s.title}
+        </option>
+      ))}
+    </Select>
+  )
+}
+
 export function TimeLogger() {
   const { data: swimmers, isLoading } = useSwimmers()
+  const { data: sessions } = useSessions()
   const [mode, setMode] = useState<Mode>('stopwatch')
 
   return (
@@ -50,9 +79,9 @@ export function TimeLogger() {
           description="Times are always attached to a swimmer, stroke and distance."
         />
       ) : mode === 'stopwatch' ? (
-        <StopwatchMode swimmers={swimmers} />
+        <StopwatchMode swimmers={swimmers} sessions={sessions ?? []} />
       ) : (
-        <BulkMode swimmers={swimmers} />
+        <BulkMode swimmers={swimmers} sessions={sessions ?? []} />
       )}
     </div>
   )
@@ -60,23 +89,41 @@ export function TimeLogger() {
 
 // ---------------- Stopwatch mode ----------------
 
-function StopwatchMode({ swimmers }: { swimmers: Swimmer[] }) {
+function SwimmerCssBadge({ swimmerId }: { swimmerId: string }) {
+  const { data: css } = useCssResultForSwimmer(swimmerId)
+  if (!css) return null
+  return (
+    <span className="flex items-center gap-1 rounded-component bg-primary/10 px-2 py-0.5 text-xs font-mono tabular-nums text-primary">
+      <Gauge className="h-3 w-3" />
+      CSS {formatTime(css.pace_per_100)}/100m
+    </span>
+  )
+}
+
+function StopwatchMode({
+  swimmers,
+  sessions,
+}: {
+  swimmers: Swimmer[]
+  sessions: { id: string; title: string; date: string }[]
+}) {
   const logTime = useLogTime()
+  const today = new Date().toISOString().slice(0, 10)
+  const todaySessionId = sessions.find((s) => s.date === today)?.id ?? ''
+
   const [search, setSearch] = useState('')
   const [swimmerId, setSwimmerId] = useState<string>(swimmers[0]?.id ?? '')
   const [stroke, setStroke] = useState<Stroke>('freestyle')
   const [distance, setDistance] = useState<number>(100)
+  const [sessionId, setSessionId] = useState<string>(todaySessionId)
 
-  const [pending, setPending] = useState<number | null>(null) // seconds awaiting confirm
+  const [pending, setPending] = useState<number | null>(null)
   const [manual, setManual] = useState('')
   const [notes, setNotes] = useState('')
   const [result, setResult] = useState<{ seconds: number; isPb: boolean } | null>(null)
 
   const filtered = useMemo(
-    () =>
-      swimmers.filter((s) =>
-        swimmerName(s).toLowerCase().includes(search.toLowerCase()),
-      ),
+    () => swimmers.filter((s) => swimmerName(s).toLowerCase().includes(search.toLowerCase())),
     [swimmers, search],
   )
 
@@ -94,6 +141,7 @@ function StopwatchMode({ swimmers }: { swimmers: Swimmer[] }) {
       stroke,
       distance,
       time_seconds: pending,
+      session_id: sessionId || null,
       notes,
     })
     setResult({ seconds: pending, isPb: res.isPb })
@@ -104,7 +152,6 @@ function StopwatchMode({ swimmers }: { swimmers: Swimmer[] }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
-      {/* Left: selectors */}
       <Card>
         <CardHeader title="Who & what" subtitle="Pick the swimmer and event" />
         <div className="space-y-4">
@@ -134,29 +181,24 @@ function StopwatchMode({ swimmers }: { swimmers: Swimmer[] }) {
             </div>
           </div>
 
+          {swimmerId && <SwimmerCssBadge swimmerId={swimmerId} />}
+
           <Select label="Stroke" value={stroke} onChange={(e) => setStroke(e.target.value as Stroke)}>
             {STROKES.map((s) => (
-              <option key={s} value={s} className="capitalize">
-                {s}
-              </option>
+              <option key={s} value={s} className="capitalize">{s}</option>
             ))}
           </Select>
 
-          <Select
-            label="Distance (m)"
-            value={distance}
-            onChange={(e) => setDistance(Number(e.target.value))}
-          >
+          <Select label="Distance (m)" value={distance} onChange={(e) => setDistance(Number(e.target.value))}>
             {DISTANCES.map((d) => (
-              <option key={d} value={d}>
-                {d}m
-              </option>
+              <option key={d} value={d}>{d}m</option>
             ))}
           </Select>
+
+          <SessionPicker sessions={sessions} value={sessionId} onChange={setSessionId} />
         </div>
       </Card>
 
-      {/* Right: stopwatch + confirm */}
       <Card>
         <CardHeader
           title="Timer"
@@ -164,15 +206,11 @@ function StopwatchMode({ swimmers }: { swimmers: Swimmer[] }) {
         />
 
         {result ? (
-          <CelebrationPanel
-            result={result}
-            onLogAnother={() => setResult(null)}
-          />
+          <CelebrationPanel result={result} onLogAnother={() => setResult(null)} />
         ) : (
           <div className="space-y-6">
             <Stopwatch onStop={(seconds) => beginConfirm(seconds)} />
 
-            {/* Manual override */}
             <div className="flex items-end gap-2 border-t border-border pt-4">
               <Input
                 label="Or enter manually"
@@ -271,11 +309,21 @@ function emptyRow(swimmerId: string): BulkRow {
   return { swimmerId, stroke: 'freestyle', distance: 100, raw: '' }
 }
 
-function BulkMode({ swimmers }: { swimmers: Swimmer[] }) {
+function BulkMode({
+  swimmers,
+  sessions,
+}: {
+  swimmers: Swimmer[]
+  sessions: { id: string; title: string; date: string }[]
+}) {
   const logTime = useLogTime()
+  const today = new Date().toISOString().slice(0, 10)
+  const todaySessionId = sessions.find((s) => s.date === today)?.id ?? ''
+
   const [rows, setRows] = useState<BulkRow[]>(() =>
     Array.from({ length: 4 }, () => emptyRow(swimmers[0]?.id ?? '')),
   )
+  const [sessionId, setSessionId] = useState<string>(todaySessionId)
   const [saving, setSaving] = useState(false)
   const [savedCount, setSavedCount] = useState<number | null>(null)
 
@@ -295,6 +343,7 @@ function BulkMode({ swimmers }: { swimmers: Swimmer[] }) {
         stroke: r.stroke,
         distance: r.distance,
         time_seconds: seconds,
+        session_id: sessionId || null,
       })
       count++
     }
@@ -320,6 +369,10 @@ function BulkMode({ swimmers }: { swimmers: Swimmer[] }) {
         }
       />
 
+      <div className="mb-4">
+        <SessionPicker sessions={sessions} value={sessionId} onChange={setSessionId} />
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -338,27 +391,21 @@ function BulkMode({ swimmers }: { swimmers: Swimmer[] }) {
                   <td className="py-2 pr-3">
                     <Select value={r.swimmerId} onChange={(e) => update(i, { swimmerId: e.target.value })}>
                       {swimmers.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {swimmerName(s)}
-                        </option>
+                        <option key={s.id} value={s.id}>{swimmerName(s)}</option>
                       ))}
                     </Select>
                   </td>
                   <td className="py-2 pr-3">
                     <Select value={r.stroke} onChange={(e) => update(i, { stroke: e.target.value as Stroke })}>
                       {STROKES.map((s) => (
-                        <option key={s} value={s} className="capitalize">
-                          {s}
-                        </option>
+                        <option key={s} value={s} className="capitalize">{s}</option>
                       ))}
                     </Select>
                   </td>
                   <td className="py-2 pr-3">
                     <Select value={r.distance} onChange={(e) => update(i, { distance: Number(e.target.value) })}>
                       {DISTANCES.map((d) => (
-                        <option key={d} value={d}>
-                          {d}m
-                        </option>
+                        <option key={d} value={d}>{d}m</option>
                       ))}
                     </Select>
                   </td>

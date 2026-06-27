@@ -18,18 +18,18 @@ const EASE = 'cubic-bezier(.2,.7,.2,1)'
 const FEATURES = [
   {
     index: '01',
-    title: 'Every split, captured',
-    body: 'Log sets, intervals and rest in the language coaches actually use — not a generic distance box.',
+    title: 'Track every split',
+    body: 'Log sets and intervals in the language coaches use — "8 × 100m freestyle on 1:30" — not a generic distance box.',
   },
   {
     index: '02',
-    title: 'Pace that adapts',
-    body: 'Targets recalibrate to your level and recent form, from first lengths to race taper.',
+    title: 'Know your CSS',
+    body: 'Run the 400m + 200m test and unlock your Critical Swim Speed — the pace threshold elite squads use to calibrate every interval.',
   },
   {
     index: '03',
-    title: 'See the long game',
-    body: "Volume, pace and consistency trended across the season — the story a single session can't tell.",
+    title: 'See every PB, every stroke',
+    body: 'Volume, pace and consistency charted across the season. Spot which stroke is lagging before your coach has to say it.',
   },
 ]
 
@@ -349,37 +349,41 @@ export function WelcomePage() {
               </div>
 
               {/* Metric strip */}
-              <div
-                className="animate-fade-up"
-                style={{ display: 'flex', gap: 34, marginTop: 44, animationDelay: '.26s' }}
-              >
-                <div>
-                  <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: v('--c-text-muted') }}>
-                    This week
+              <div className="animate-fade-up" style={{ marginTop: 44, animationDelay: '.26s' }}>
+                <div style={{ display: 'flex', gap: 34 }}>
+                  <div>
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: v('--c-text-muted') }}>
+                      This week
+                    </div>
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', color: v('--c-text-primary'), marginTop: 8 }}>
+                      <span ref={countRef}>0</span>
+                      <span style={{ fontSize: 15, color: v('--c-text-secondary'), marginLeft: 4 }}>m</span>
+                    </div>
                   </div>
-                  <div style={{ fontFamily: FONT_MONO, fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', color: v('--c-text-primary'), marginTop: 8 }}>
-                    <span ref={countRef}>0</span>
-                    <span style={{ fontSize: 15, color: v('--c-text-secondary'), marginLeft: 4 }}>m</span>
+                  <div style={{ width: 1, background: v('--c-border') }} />
+                  <div>
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: v('--c-text-muted') }}>
+                      Avg /100m
+                    </div>
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', color: v('--c-text-primary'), marginTop: 8 }}>
+                      1:42
+                    </div>
+                  </div>
+                  <div style={{ width: 1, background: v('--c-border') }} />
+                  <div>
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: v('--c-text-muted') }}>
+                      Streak
+                    </div>
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', color: v('--c-primary'), marginTop: 8 }}>
+                      12<span style={{ fontSize: 15, color: v('--c-text-secondary'), marginLeft: 4 }}>d</span>
+                    </div>
                   </div>
                 </div>
-                <div style={{ width: 1, background: v('--c-border') }} />
-                <div>
-                  <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: v('--c-text-muted') }}>
-                    Avg /100m
+                {!isAuthenticated && (
+                  <div style={{ marginTop: 10, fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase', color: v('--c-text-muted') }}>
+                    Example data · sign up to see your real stats
                   </div>
-                  <div style={{ fontFamily: FONT_MONO, fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', color: v('--c-text-primary'), marginTop: 8 }}>
-                    1:42
-                  </div>
-                </div>
-                <div style={{ width: 1, background: v('--c-border') }} />
-                <div>
-                  <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: v('--c-text-muted') }}>
-                    Streak
-                  </div>
-                  <div style={{ fontFamily: FONT_MONO, fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', color: v('--c-primary'), marginTop: 8 }}>
-                    12<span style={{ fontSize: 15, color: v('--c-text-secondary'), marginLeft: 4 }}>d</span>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 

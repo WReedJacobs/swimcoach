@@ -4,9 +4,7 @@ import { BookOpen, Timer, Flag, GraduationCap, Search } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { ProgressRing } from '@/components/ui/ProgressBar'
-import { useBeginnerLogs } from './beginnerStore'
-
-const WEEKLY_GOAL_M = 1000
+import { useBeginnerLogs, useBeginnerGoal } from './beginnerStore'
 
 const quickLinks = [
   { to: '/beginner/strokes', label: 'Stroke guides', icon: BookOpen },
@@ -18,6 +16,7 @@ const quickLinks = [
 
 export function BeginnerHome() {
   const [logs] = useBeginnerLogs()
+  const [weeklyGoalM] = useBeginnerGoal()
 
   const distanceThisWeek = useMemo(() => {
     const weekStart = new Date()
@@ -32,7 +31,7 @@ export function BeginnerHome() {
   return (
     <div className="space-y-8">
       <Card className="border-coral/20 bg-coral/5">
-        <h2 className="text-xl font-semibold text-text-primary">Welcome to SwimCoach 🏊</h2>
+        <h2 className="text-xl font-semibold text-text-primary">Welcome to SwimCoach</h2>
         <p className="mt-1 text-sm text-text-secondary">
           You don't need a coach to start. Read the guides, log your swims, and tick off milestones at your own pace.
         </p>
@@ -45,9 +44,9 @@ export function BeginnerHome() {
           <CardHeader title="This week" />
           <ProgressRing
             value={distanceThisWeek}
-            max={WEEKLY_GOAL_M}
+            max={weeklyGoalM}
             label={`${distanceThisWeek}m`}
-            sublabel={`of ${WEEKLY_GOAL_M}m goal`}
+            sublabel={`of ${weeklyGoalM}m goal`}
           />
         </Card>
 

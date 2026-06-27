@@ -32,3 +32,7 @@ export function useMilestones() {
     MILESTONES.map((m) => ({ distance: m.distance, achievedAt: null })),
   )
 }
+
+export function useBeginnerGoal() {
+  return useLocalStorage<number>('sc_beginner_goal', 1000)
+}

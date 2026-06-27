@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Trophy, Pin, PinOff, Send, Timer, Trash2 } from 'lucide-react'
+import { ArrowLeft, Trophy, Pin, PinOff, Send, Timer, Trash2, Gauge } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
@@ -13,6 +13,7 @@ import { useSwimmer } from '@/hooks/useSwimmers'
 import { useTimes, useDeleteTime } from '@/hooks/useTimes'
 import { useGoals, useDeleteGoal } from '@/hooks/useGoals'
 import { useFeedback, useCreateFeedback, useDeleteFeedback, useToggleFeedbackPin } from '@/hooks/useFeedback'
+import { useCssResultForSwimmer } from '@/hooks/useCssResults'
 import { formatTime } from '@/lib/formatTime'
 import { STROKES, swimmerName } from '@/types'
 import type { Stroke, SwimTime, Goal, Feedback } from '@/types'
@@ -23,6 +24,7 @@ export function SwimmerProfilePage() {
   const { data: times } = useTimes(swimmerId)
   const { data: goals } = useGoals(swimmerId)
   const { data: feedback } = useFeedback(swimmerId)
+  const { data: cssResult } = useCssResultForSwimmer(swimmerId)
   const createFeedback = useCreateFeedback()
   const deleteTime = useDeleteTime()
   const deleteGoal = useDeleteGoal()
@@ -66,9 +68,17 @@ export function SwimmerProfilePage() {
           </div>
           {swimmer.notes && <p className="mt-2 text-sm text-text-secondary">{swimmer.notes}</p>}
         </div>
-        <Link to="/coach/log">
-          <Button leftIcon={<Timer className="h-4 w-4" />}>Log a time</Button>
-        </Link>
+        <div className="flex flex-col items-end gap-2">
+          {cssResult && (
+            <span className="flex items-center gap-1.5 rounded-component bg-primary/10 px-3 py-1 text-xs font-mono tabular-nums text-primary">
+              <Gauge className="h-3.5 w-3.5" />
+              CSS {formatTime(cssResult.pace_per_100)}/100m
+            </span>
+          )}
+          <Link to="/coach/log">
+            <Button leftIcon={<Timer className="h-4 w-4" />}>Log a time</Button>
+          </Link>
+        </div>
       </Card>
 
       <div>

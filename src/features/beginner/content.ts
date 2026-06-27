@@ -95,9 +95,13 @@ export interface GlossaryTerm {
 }
 
 export const glossary: GlossaryTerm[] = [
+  { term: 'Broken swim', definition: 'A race-distance swim split into sections with brief rests. e.g. "200 broken at 100" means swim 100m, rest 10 seconds, then swim the remaining 100m.' },
   { term: 'Catch', definition: 'The moment your hand grabs the water at the start of a pull.' },
   { term: 'Cool-down', definition: 'Easy swimming at the end of a session to recover.' },
+  { term: 'CSS', definition: 'Critical Swim Speed — your aerobic threshold pace per 100m, calculated from a 400m and a 200m time trial. Used to set interval training paces.' },
+  { term: 'Descending', definition: 'A set where each rep is faster than the last. "4 × 100m descending" means rep 4 should be your fastest.' },
   { term: 'Dolphin kick', definition: 'Both legs kicking together in a wave, used in butterfly.' },
+  { term: 'DPS', definition: 'Distance Per Stroke — how far you travel per complete arm cycle. Improving DPS means fewer strokes and less wasted energy.' },
   { term: 'Drill', definition: 'A focused exercise that isolates one part of a stroke to improve it.' },
   { term: 'Flip turn', definition: 'A somersault turn at the wall used in freestyle and backstroke.' },
   { term: 'Glide', definition: 'A streamlined pause where you stretch and let momentum carry you.' },
@@ -105,9 +109,12 @@ export const glossary: GlossaryTerm[] = [
   { term: 'Interval', definition: 'The total time given for a swim plus rest, e.g. "on 1:30".' },
   { term: 'Kickboard', definition: 'A float you hold to isolate and train your kick.' },
   { term: 'Lap', definition: 'One length of the pool (sometimes two, depending on the club).' },
+  { term: 'Negative split', definition: 'Swimming the second half of a race or set faster than the first half — a sign of smart pacing and controlled effort.' },
+  { term: 'On the top', definition: 'Starting each rep when the clock hits :00 (the top of the minute). Your coach may say "leave on the top" to mean send-off on the minute.' },
   { term: 'PB', definition: 'Personal Best — your fastest ever time for an event.' },
   { term: 'Pull buoy', definition: 'A float held between the thighs to isolate the arm stroke.' },
   { term: 'Recovery', definition: 'The part of the stroke where your arm travels back over the water.' },
+  { term: 'Send-off', definition: 'The total time for one rep plus rest. A "1:30 send-off" means you leave for the next rep 1 min 30 s after you started the previous one.' },
   { term: 'Set', definition: 'A group of swims with a shared purpose, e.g. "8 × 50m".' },
   { term: 'Streamline', definition: 'The tight, arrow-like shape you hold off the wall to reduce drag.' },
   { term: 'Taper', definition: 'Reducing training load before a big competition.' },
@@ -150,7 +157,7 @@ export const beginnerProgram: ProgramWeek[] = [
     focus: 'Swimming continuously',
     sessions: [
       { title: 'Session 1', what: 'Swim 100m without stopping at an easy pace.', distance: '100m continuous' },
-      { title: 'Session 2', what: 'Swim as far as you can comfortably, then log your distance. Celebrate!', distance: 'Your choice' },
+      { title: 'Session 2', what: 'Swim 6 × 50m freestyle with 20 s rest between each. Focus on holding the same pace every rep, then log your fastest 50m time.', distance: '300m total' },
     ],
   },
 ]

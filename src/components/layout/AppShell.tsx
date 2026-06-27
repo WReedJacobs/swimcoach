@@ -4,6 +4,8 @@ import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { MobileNav } from './MobileNav'
 import { navForRole } from './nav'
+import { useMySwimmer } from '@/hooks/useMySwimmer'
+import { useSwimmerRealtime } from '@/hooks/useSwimmerRealtime'
 
 function titleForPath(role: Role | null, pathname: string): string {
   const items = navForRole(role)
@@ -15,10 +17,18 @@ function titleForPath(role: Role | null, pathname: string): string {
   return 'SwimCoach'
 }
 
+/** Null-render component that sets up realtime notifications for a swimmer. */
+function SwimmerRealtimeLayer() {
+  const { data: swimmer } = useMySwimmer()
+  useSwimmerRealtime(swimmer?.id)
+  return null
+}
+
 export function AppShell({ role }: { role: Role | null }) {
   const { pathname } = useLocation()
   return (
     <div className="flex h-screen overflow-hidden bg-bg">
+      {role === 'swimmer' && <SwimmerRealtimeLayer />}
       <Sidebar role={role} />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar title={titleForPath(role, pathname)} />

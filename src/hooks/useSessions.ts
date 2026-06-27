@@ -158,3 +158,57 @@ export function useDeleteSession() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['sessions', user?.id] }),
   })
 }
+
+export interface AssignmentRow {
+  id: string
+  session_id: string
+  swimmer_id: string
+  attended: boolean
+  display_name: string
+}
+
+/** All session assignments for the coach, with swimmer display names. */
+export function useAllSessionAssignments() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['all-session-assignments', user?.id],
+    enabled: Boolean(user),
+    queryFn: async (): Promise<AssignmentRow[]> => {
+      const { data, error } = await supabase
+        .from('session_assignments')
+        .select('id, session_id, swimmer_id, attended, swimmers(display_name)')
+      if (error) throw error
+      return ((data ?? []) as unknown as Array<{
+        id: string
+        session_id: string
+        swimmer_id: string
+        attended: boolean
+        swimmers: { display_name: string } | { display_name: string }[] | null
+      }>).map((r) => {
+        const sw = Array.isArray(r.swimmers) ? r.swimmers[0] : r.swimmers
+        return {
+          id: r.id,
+          session_id: r.session_id,
+          swimmer_id: r.swimmer_id,
+          attended: r.attended,
+          display_name: sw?.display_name ?? 'Swimmer',
+        }
+      })
+    },
+  })
+}
+
+export function useMarkAttendance() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ assignmentId, attended }: { assignmentId: string; attended: boolean }) => {
+      const { error } = await supabase
+        .from('session_assignments')
+        .update({ attended })
+        .eq('id', assignmentId)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['all-session-assignments', user?.id] }),
+  })
+}

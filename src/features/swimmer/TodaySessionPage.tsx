@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CalendarDays, Plus, Trophy } from 'lucide-react'
+import { CalendarDays, Plus, Trophy, Check } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
@@ -7,10 +7,11 @@ import { Input, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
-import { SessionBlocks } from '@/components/SessionBlocks'
 import { useMySwimmer, useAssignedSessions } from '@/hooks/useMySwimmer'
 import { useLogTime } from '@/hooks/useTimes'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { parseTime } from '@/lib/formatTime'
+import { cn } from '@/lib/cn'
 import { STROKES, DISTANCES } from '@/types'
 import type { Session, Stroke } from '@/types'
 
@@ -23,7 +24,7 @@ function LogTimePanel({ session, swimmerId, onDone }: { session: Session; swimme
   const save = async () => {
     const seconds = parseTime(raw)
     if (seconds == null) return
-    const result = await logTime.mutateAsync({
+    await logTime.mutateAsync({
       swimmer_id: swimmerId,
       stroke,
       distance,
@@ -32,8 +33,7 @@ function LogTimePanel({ session, swimmerId, onDone }: { session: Session; swimme
       is_self_logged: true,
     })
     setRaw('')
-    if (result.isPb) onDone()
-    else onDone()
+    onDone()
   }
 
   return (
@@ -63,6 +63,56 @@ function LogTimePanel({ session, swimmerId, onDone }: { session: Session; swimme
           Save time
         </Button>
       </div>
+    </div>
+  )
+}
+
+const BLOCKS: { key: string; label: string; field: keyof Session }[] = [
+  { key: 'warm_up', label: 'Warm-up', field: 'warm_up' },
+  { key: 'main_set', label: 'Main set', field: 'main_set' },
+  { key: 'cool_down', label: 'Cool-down', field: 'cool_down' },
+]
+
+function CheckableBlocks({ session }: { session: Session }) {
+  const today = new Date().toISOString().slice(0, 10)
+  const [done, setDone] = useLocalStorage<Record<string, boolean>>(`sc_block_done_${today}`, {})
+
+  const toggle = (key: string) => setDone((prev) => ({ ...prev, [key]: !prev[key] }))
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-3">
+      {BLOCKS.map(({ key, label, field }) => {
+        const checked = !!done[key]
+        const body = session[field] as string | null
+        return (
+          <div
+            key={key}
+            className={cn(
+              'rounded-component bg-bg p-3 transition-opacity',
+              checked && 'opacity-60',
+            )}
+          >
+            <button
+              onClick={() => toggle(key)}
+              className="flex items-center gap-2 text-left"
+              aria-label={checked ? `Uncheck ${label}` : `Check off ${label}`}
+            >
+              <span
+                className={cn(
+                  'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
+                  checked ? 'border-secondary bg-secondary' : 'border-border',
+                )}
+              >
+                {checked && <Check className="h-3 w-3 text-on-primary" />}
+              </span>
+              <p className={cn('text-xs font-medium uppercase tracking-wide text-text-muted', checked && 'line-through')}>
+                {label}
+              </p>
+            </button>
+            <p className="mt-1 whitespace-pre-line text-sm text-text-primary">{body || '—'}</p>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -114,7 +164,7 @@ export function TodaySessionPage() {
                 <h3 className="text-lg font-semibold text-text-primary">{todaySession.title}</h3>
                 <Badge tone="blue" className="capitalize">{todaySession.type}</Badge>
               </div>
-              <SessionBlocks session={todaySession} />
+              <CheckableBlocks session={todaySession} />
               {todaySession.notes && (
                 <p className="rounded-component bg-bg p-3 text-sm text-text-secondary">{todaySession.notes}</p>
               )}

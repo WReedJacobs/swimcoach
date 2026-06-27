@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarDays, Target, UserPlus, ArrowRight } from 'lucide-react'
+import { CalendarDays, Target, UserPlus, ArrowRight, Pin } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { StatTile } from '@/components/ui/StatTile'
@@ -10,10 +10,21 @@ import { SessionBlocks } from '@/components/SessionBlocks'
 import { TimesChart } from '@/components/charts/TimesChart'
 import { useMySwimmer, useAssignedSessions } from '@/hooks/useMySwimmer'
 import { useTimes } from '@/hooks/useTimes'
+import { useFeedback } from '@/hooks/useFeedback'
+import { useStreak } from '@/hooks/useStreak'
 import { useJoinCoach } from '@/hooks/useJoinCode'
 import { useAuth } from '@/hooks/useAuth'
+import { useOnboardingDraft } from '@/features/onboarding/onboardingStore'
 import { fastestByEvent } from '@/lib/pbDetector'
 import { cn } from '@/lib/cn'
+
+function startOfWeek(): Date {
+  const d = new Date()
+  const day = (d.getDay() + 6) % 7
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() - day)
+  return d
+}
 
 function JoinCoachCard() {
   const { mutateAsync: joinCoach } = useJoinCoach()
@@ -101,14 +112,24 @@ export function SwimmerDashboard() {
   const { data: swimmer } = useMySwimmer()
   const { data: sessions } = useAssignedSessions(swimmer?.id)
   const { data: times } = useTimes(swimmer?.id)
+  const { data: feedback } = useFeedback(swimmer?.id)
+  const streak = useStreak(swimmer?.id)
+  const [onboarding] = useOnboardingDraft()
 
   const today = new Date().toISOString().slice(0, 10)
   const todaySession = (sessions ?? []).find((s) => s.date === today) ?? null
 
   const pbCount = useMemo(() => fastestByEvent(times ?? []).size, [times])
 
-  // Show join card when no coach is linked, or when the swimmer is self-managed
-  // (coach_id === profile.id means the onboarding created a self-managed row)
+  const weeklyVolume = useMemo(() => {
+    const weekStart = startOfWeek()
+    return (times ?? [])
+      .filter((t) => new Date(t.recorded_at) >= weekStart)
+      .reduce((sum, t) => sum + t.distance, 0)
+  }, [times])
+
+  const pinnedFeedback = useMemo(() => (feedback ?? []).filter((f) => f.is_pinned), [feedback])
+
   const hasRealCoach =
     profile?.coach_id !== null && profile?.coach_id !== profile?.id
 
@@ -123,12 +144,39 @@ export function SwimmerDashboard() {
 
       <div>
         <SectionHeader kicker="Overview" />
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatTile label="Times logged" value={times?.length ?? 0} />
           <StatTile label="Personal bests" value={pbCount} accent />
-          <StatTile label="Sessions assigned" value={sessions?.length ?? 0} />
+          <StatTile label="Day streak" value={streak} unit={streak === 1 ? 'day' : 'days'} />
+          <StatTile
+            label="This week"
+            value={weeklyVolume}
+            unit="m"
+            hint={onboarding.weeklyGoalMeters ? `of ${onboarding.weeklyGoalMeters.toLocaleString()}m goal` : undefined}
+          />
         </div>
       </div>
+
+      {pinnedFeedback.length > 0 && (
+        <div>
+          <SectionHeader kicker="From your coach" />
+          <div className="space-y-2">
+            {pinnedFeedback.map((f) => (
+              <Card key={f.id} className="border-accent/20 bg-accent/5">
+                <div className="flex items-start gap-2">
+                  <Pin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+                  <div className="min-w-0">
+                    <p className="text-sm text-text-primary">{f.content}</p>
+                    <p className="mt-1 font-mono text-xs tabular-nums text-text-muted">
+                      {new Date(f.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <SectionHeader kicker="Today" />

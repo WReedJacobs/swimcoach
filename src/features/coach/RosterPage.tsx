@@ -187,7 +187,7 @@ export function RosterPage() {
         <EmptyState
           icon={<Users className="h-6 w-6" />}
           title="Add your first swimmer to get started"
-          description="Build your roster, then log times and assign sessions."
+          description="Add swimmers manually below, or share your join code above so swimmers can link themselves to your roster instantly."
           action={
             <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setModal(true)}>
               Add swimmer
