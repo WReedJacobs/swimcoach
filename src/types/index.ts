@@ -52,6 +52,8 @@ export function swimmerName(s: Swimmer): string {
   return s.profile?.full_name || s.display_name || 'Swimmer'
 }
 
+export type Recurrence = 'none' | 'weekly' | 'mwf' | 'daily'
+
 export interface Session {
   id: string
   coach_id: string
@@ -62,6 +64,8 @@ export interface Session {
   main_set: string | null
   cool_down: string | null
   notes: string | null
+  recurrence: Recurrence
+  recurrence_end: string | null
   created_at: string
 }
 

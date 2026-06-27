@@ -1,23 +1,57 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Save, BookOpen, Gauge } from 'lucide-react'
+import { ArrowLeft, Save, BookOpen, Gauge, Repeat2 } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/cn'
+import { supabase } from '@/lib/supabase'
 import { useCreateSession, useUpdateSession, useSession, useSessionAssignments } from '@/hooks/useSessions'
 import { useSwimmers } from '@/hooks/useSwimmers'
 import { useDrills } from '@/hooks/useDrills'
+import { useAuth } from '@/hooks/useAuth'
 import { swimmerName, DISTANCES } from '@/types'
-import type { SessionType } from '@/types'
+import type { SessionType, Recurrence } from '@/types'
 import { formatTime, parseTime } from '@/lib/formatTime'
 import { buildSetTarget } from '@/lib/cssCalculator'
+
+function generateDates(start: string, pattern: Exclude<Recurrence, 'none'>, end: string): string[] {
+  const startD = new Date(start + 'T00:00:00')
+  const endD = new Date(end + 'T00:00:00')
+  const dates: string[] = []
+  const d = new Date(startD)
+  if (pattern === 'weekly') {
+    while (d <= endD) {
+      dates.push(d.toISOString().slice(0, 10))
+      d.setDate(d.getDate() + 7)
+    }
+  } else if (pattern === 'mwf') {
+    while (d <= endD) {
+      const dow = d.getDay()
+      if (dow === 1 || dow === 3 || dow === 5) dates.push(d.toISOString().slice(0, 10))
+      d.setDate(d.getDate() + 1)
+    }
+  } else if (pattern === 'daily') {
+    while (d <= endD) {
+      dates.push(d.toISOString().slice(0, 10))
+      d.setDate(d.getDate() + 1)
+    }
+  }
+  return dates
+}
+
+function addWeeks(dateStr: string, weeks: number): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + weeks * 7)
+  return d.toISOString().slice(0, 10)
+}
 
 export function SessionBuilder() {
   const navigate = useNavigate()
   const { sessionId } = useParams<{ sessionId: string }>()
   const isEditing = Boolean(sessionId)
+  const { user } = useAuth()
 
   const createSession = useCreateSession()
   const updateSession = useUpdateSession()
@@ -35,6 +69,10 @@ export function SessionBuilder() {
   const [notes, setNotes] = useState('')
   const [assigned, setAssigned] = useState<string[]>([])
   const [drillPicker, setDrillPicker] = useState<null | 'warm_up' | 'cool_down'>(null)
+
+  const [recurrence, setRecurrence] = useState<Recurrence>('none')
+  const [recurrenceEnd, setRecurrenceEnd] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
 
   const [paceOpen, setPaceOpen] = useState(false)
   const [cssPace, setCssPace] = useState('1:30')
@@ -62,6 +100,19 @@ export function SessionBuilder() {
     }
   }, [existingAssigned])
 
+  // Default recurrence_end to 8 weeks out when enabling recurrence
+  useEffect(() => {
+    if (recurrence !== 'none' && !recurrenceEnd) {
+      setRecurrenceEnd(addWeeks(date, 8))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recurrence])
+
+  const previewDates = useMemo(() => {
+    if (recurrence === 'none' || !recurrenceEnd) return null
+    return generateDates(date, recurrence, recurrenceEnd)
+  }, [recurrence, date, recurrenceEnd])
+
   const cssSeconds = parseTime(cssPace)
   const previewSet =
     cssSeconds != null ? buildSetTarget(cssSeconds, reps, setDistance, offset, rest) : null
@@ -87,7 +138,56 @@ export function SessionBuilder() {
 
   const save = async () => {
     if (!title.trim()) return
-    const payload = {
+
+    if (isEditing && sessionId) {
+      await updateSession.mutateAsync({
+        id: sessionId,
+        title,
+        date,
+        type,
+        warm_up: warmUp,
+        main_set: mainSet,
+        cool_down: coolDown,
+        notes,
+        swimmerIds: assigned,
+      })
+      navigate('/coach/sessions')
+      return
+    }
+
+    // Recurring: bulk-insert all sessions in a single call
+    if (recurrence !== 'none' && recurrenceEnd && previewDates && previewDates.length > 0) {
+      setIsSaving(true)
+      try {
+        const rows = previewDates.map((d) => ({
+          coach_id: user!.id,
+          title,
+          date: d,
+          type,
+          recurrence,
+          recurrence_end: recurrenceEnd,
+          warm_up: warmUp || null,
+          main_set: mainSet || null,
+          cool_down: coolDown || null,
+          notes: notes || null,
+        }))
+        const { data, error } = await supabase.from('sessions').insert(rows).select('id')
+        if (error) throw error
+        if (assigned.length > 0 && data) {
+          const assignmentRows = (data as { id: string }[]).flatMap((s) =>
+            assigned.map((swimmer_id) => ({ session_id: s.id, swimmer_id }))
+          )
+          const { error: assignErr } = await supabase.from('session_assignments').insert(assignmentRows)
+          if (assignErr) throw assignErr
+        }
+      } finally {
+        setIsSaving(false)
+      }
+      navigate('/coach/sessions')
+      return
+    }
+
+    await createSession.mutateAsync({
       title,
       date,
       type,
@@ -96,16 +196,11 @@ export function SessionBuilder() {
       cool_down: coolDown,
       notes,
       swimmerIds: assigned,
-    }
-    if (isEditing && sessionId) {
-      await updateSession.mutateAsync({ id: sessionId, ...payload })
-    } else {
-      await createSession.mutateAsync(payload)
-    }
+    })
     navigate('/coach/sessions')
   }
 
-  const isPending = createSession.isPending || updateSession.isPending
+  const isPending = createSession.isPending || updateSession.isPending || isSaving
 
   return (
     <div className="space-y-6">
@@ -130,6 +225,29 @@ export function SessionBuilder() {
                   <option value="dryland">Dryland</option>
                 </Select>
               </div>
+
+              {!isEditing && (
+                <div className="grid grid-cols-2 gap-3">
+                  <Select
+                    label="Repeat"
+                    value={recurrence}
+                    onChange={(e) => setRecurrence(e.target.value as Recurrence)}
+                  >
+                    <option value="none">Does not repeat</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="mwf">Mon – Wed – Fri</option>
+                    <option value="daily">Daily</option>
+                  </Select>
+                  {recurrence !== 'none' && (
+                    <Input
+                      label="Repeat until"
+                      type="date"
+                      value={recurrenceEnd}
+                      onChange={(e) => setRecurrenceEnd(e.target.value)}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </Card>
 
@@ -197,8 +315,23 @@ export function SessionBuilder() {
             )}
           </Card>
 
+          {previewDates && previewDates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-component border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-text-secondary">
+              <Repeat2 className="h-4 w-4 shrink-0 text-primary" />
+              <span>
+                Will create{' '}
+                <span className="font-mono font-semibold text-text-primary">{previewDates.length}</span>{' '}
+                session{previewDates.length === 1 ? '' : 's'}
+              </span>
+            </div>
+          )}
+
           <Button className="w-full" size="lg" leftIcon={<Save className="h-5 w-5" />} loading={isPending} disabled={!title.trim()} onClick={save}>
-            {isEditing ? 'Update session' : 'Save session'}
+            {isEditing
+              ? 'Update session'
+              : previewDates && previewDates.length > 1
+              ? `Save ${previewDates.length} sessions`
+              : 'Save session'}
           </Button>
         </div>
       </div>

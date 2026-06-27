@@ -33,6 +33,7 @@ import { GoalsPage } from '@/features/swimmer/GoalsPage'
 import { CssTestPage } from '@/features/swimmer/CssTestPage'
 import { FeedbackViewPage } from '@/features/swimmer/FeedbackViewPage'
 import { AchievementsPage } from '@/features/swimmer/AchievementsPage'
+import { MessagesPage as SwimmerMessagesPage } from '@/features/swimmer/MessagesPage'
 import { SwimmerSchedulePage } from '@/features/swimmer/SwimmerSchedulePage'
 
 // Beginner
@@ -108,6 +109,7 @@ export default function App() {
         <Route path="/swimmer/schedule" element={<SwimmerSchedulePage />} />
         <Route path="/swimmer/feedback" element={<FeedbackViewPage />} />
         <Route path="/swimmer/achievements" element={<AchievementsPage />} />
+        <Route path="/swimmer/messages" element={<SwimmerMessagesPage />} />
         <Route path="/swimmer/drills" element={<DrillLibraryPage />} />
         <Route path="/swimmer/settings" element={<SettingsPage />} />
       </Route>

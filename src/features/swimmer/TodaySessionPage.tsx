@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CalendarDays, Plus, Trophy, Check } from 'lucide-react'
+import { CalendarDays, Plus, Trophy, CheckCircle2, Check } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
@@ -15,7 +15,15 @@ import { cn } from '@/lib/cn'
 import { STROKES, DISTANCES } from '@/types'
 import type { Session, Stroke } from '@/types'
 
-function LogTimePanel({ session, swimmerId, onDone }: { session: Session; swimmerId: string; onDone: () => void }) {
+function LogTimePanel({
+  session,
+  swimmerId,
+  onDone,
+}: {
+  session: Session
+  swimmerId: string
+  onDone: (isPb: boolean) => void
+}) {
   const logTime = useLogTime()
   const [stroke, setStroke] = useState<Stroke>('freestyle')
   const [distance, setDistance] = useState(100)
@@ -24,7 +32,7 @@ function LogTimePanel({ session, swimmerId, onDone }: { session: Session; swimme
   const save = async () => {
     const seconds = parseTime(raw)
     if (seconds == null) return
-    await logTime.mutateAsync({
+    const result = await logTime.mutateAsync({
       swimmer_id: swimmerId,
       stroke,
       distance,
@@ -33,7 +41,7 @@ function LogTimePanel({ session, swimmerId, onDone }: { session: Session; swimme
       is_self_logged: true,
     })
     setRaw('')
-    onDone()
+    onDone(result.isPb)
   }
 
   return (
@@ -58,7 +66,7 @@ function LogTimePanel({ session, swimmerId, onDone }: { session: Session; swimme
         error={raw.length > 0 && parseTime(raw) == null ? 'Invalid time' : undefined}
       />
       <div className="flex justify-end gap-2">
-        <Button variant="ghost" onClick={onDone}>Cancel</Button>
+        <Button variant="ghost" onClick={() => onDone(false)}>Cancel</Button>
         <Button loading={logTime.isPending} disabled={parseTime(raw) == null} onClick={save}>
           Save time
         </Button>
@@ -117,6 +125,8 @@ function CheckableBlocks({ session }: { session: Session }) {
   )
 }
 
+type FlashType = 'pb' | 'saved' | null
+
 export function TodaySessionPage() {
   const { data: swimmer } = useMySwimmer()
   const { data: sessions } = useAssignedSessions(swimmer?.id)
@@ -125,12 +135,12 @@ export function TodaySessionPage() {
   const upcoming = (sessions ?? []).filter((s) => s.date > today).reverse()
 
   const [logOpen, setLogOpen] = useState(false)
-  const [pbFlash, setPbFlash] = useState(false)
+  const [flash, setFlash] = useState<FlashType>(null)
 
-  const handleDone = () => {
+  const handleDone = (isPb: boolean) => {
     setLogOpen(false)
-    setPbFlash(true)
-    setTimeout(() => setPbFlash(false), 3000)
+    setFlash(isPb ? 'pb' : 'saved')
+    setTimeout(() => setFlash(null), 3000)
   }
 
   return (
@@ -153,11 +163,18 @@ export function TodaySessionPage() {
               ) : null
             }
           />
-          {pbFlash && (
-            <div className="mb-3 flex items-center gap-2 rounded-component bg-secondary/10 px-3 py-2 text-sm text-secondary">
-              <Trophy className="h-4 w-4" /> Time saved!
+
+          {flash === 'pb' && (
+            <div className="mb-3 flex items-center gap-2 rounded-component border border-accent/30 bg-accent/10 px-3 py-2 text-sm font-medium text-accent">
+              <Trophy className="h-4 w-4" /> New personal best!
             </div>
           )}
+          {flash === 'saved' && (
+            <div className="mb-3 flex items-center gap-2 rounded-component border border-secondary/30 bg-secondary/10 px-3 py-2 text-sm text-secondary">
+              <CheckCircle2 className="h-4 w-4" /> Time saved
+            </div>
+          )}
+
           {todaySession ? (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
