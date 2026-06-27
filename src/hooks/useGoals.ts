@@ -56,3 +56,43 @@ export function useCreateGoal() {
     },
   })
 }
+
+export function useUpdateGoal() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      id,
+      swimmerId,
+      ...input
+    }: { id: string; swimmerId: string } & Partial<GoalInput>) => {
+      const { error } = await supabase
+        .from('goals')
+        .update({
+          stroke: input.stroke,
+          distance: input.distance,
+          target_time_seconds: input.target_time_seconds,
+          deadline: input.deadline ?? null,
+        })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['goals', vars.swimmerId] })
+      qc.invalidateQueries({ queryKey: ['goals-multi'] })
+    },
+  })
+}
+
+export function useDeleteGoal() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; swimmerId: string }) => {
+      const { error } = await supabase.from('goals').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['goals', vars.swimmerId] })
+      qc.invalidateQueries({ queryKey: ['goals-multi'] })
+    },
+  })
+}

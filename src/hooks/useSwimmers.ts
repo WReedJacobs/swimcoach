@@ -50,8 +50,6 @@ export function useAddSwimmer() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: AddSwimmerInput) => {
-      // Create a lightweight swimmer row owned by the coach. (Inviting a real
-      // user account by email is a follow-up; here we store the swimmer record.)
       const { data, error } = await supabase
         .from('swimmers')
         .insert({
@@ -70,5 +68,41 @@ export function useAddSwimmer() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['swimmers', user?.id] })
     },
+  })
+}
+
+export function useUpdateSwimmer() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...input }: { id: string } & Partial<AddSwimmerInput>) => {
+      const { error } = await supabase
+        .from('swimmers')
+        .update({
+          display_name: input.full_name,
+          invite_email: input.email ?? null,
+          squad: input.squad ?? null,
+          level: input.level,
+          notes: input.notes ?? null,
+        })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['swimmers', user?.id] })
+      qc.invalidateQueries({ queryKey: ['swimmer'] })
+    },
+  })
+}
+
+export function useDeleteSwimmer() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('swimmers').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['swimmers', user?.id] }),
   })
 }

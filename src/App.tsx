@@ -33,6 +33,7 @@ import { GoalsPage } from '@/features/swimmer/GoalsPage'
 import { CssTestPage } from '@/features/swimmer/CssTestPage'
 import { FeedbackViewPage } from '@/features/swimmer/FeedbackViewPage'
 import { AchievementsPage } from '@/features/swimmer/AchievementsPage'
+import { SwimmerSchedulePage } from '@/features/swimmer/SwimmerSchedulePage'
 
 // Beginner
 import { BeginnerHome } from '@/features/beginner/BeginnerHome'
@@ -82,6 +83,7 @@ export default function App() {
         <Route path="/coach/log" element={<TimeLogger />} />
         <Route path="/coach/sessions" element={<SessionsPage />} />
         <Route path="/coach/sessions/new" element={<SessionBuilder />} />
+        <Route path="/coach/sessions/:sessionId/edit" element={<SessionBuilder />} />
         <Route path="/coach/progress" element={<ProgressPage />} />
         <Route path="/coach/feedback" element={<FeedbackPage />} />
         <Route path="/coach/messages" element={<MessagesPage />} />
@@ -103,6 +105,7 @@ export default function App() {
         <Route path="/swimmer/times" element={<MyTimesPage />} />
         <Route path="/swimmer/goals" element={<GoalsPage />} />
         <Route path="/swimmer/css" element={<CssTestPage />} />
+        <Route path="/swimmer/schedule" element={<SwimmerSchedulePage />} />
         <Route path="/swimmer/feedback" element={<FeedbackViewPage />} />
         <Route path="/swimmer/achievements" element={<AchievementsPage />} />
         <Route path="/swimmer/drills" element={<DrillLibraryPage />} />

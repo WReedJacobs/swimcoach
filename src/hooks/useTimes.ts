@@ -39,6 +39,17 @@ export interface LogTimeResult {
   isPb: boolean
 }
 
+export function useDeleteTime() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('times').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['times'] }),
+  })
+}
+
 export function useLogTime() {
   const { user } = useAuth()
   const qc = useQueryClient()

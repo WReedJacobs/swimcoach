@@ -3,6 +3,37 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 import type { Session, SessionType } from '@/types'
 
+export function useSession(sessionId: string | undefined) {
+  return useQuery({
+    queryKey: ['session', sessionId],
+    enabled: Boolean(sessionId),
+    queryFn: async (): Promise<Session> => {
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('id', sessionId!)
+        .single()
+      if (error) throw error
+      return data as Session
+    },
+  })
+}
+
+export function useSessionAssignments(sessionId: string | undefined) {
+  return useQuery({
+    queryKey: ['session-assignments', sessionId],
+    enabled: Boolean(sessionId),
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from('session_assignments')
+        .select('swimmer_id')
+        .eq('session_id', sessionId!)
+      if (error) throw error
+      return (data ?? []).map((r) => r.swimmer_id as string)
+    },
+  })
+}
+
 export function useSessions() {
   const { user } = useAuth()
   return useQuery({
@@ -76,5 +107,54 @@ export function useCreateSession() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sessions', user?.id] })
     },
+  })
+}
+
+export function useUpdateSession() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, swimmerIds, ...input }: { id: string; swimmerIds?: string[] } & Partial<SessionInput>) => {
+      const { error } = await supabase
+        .from('sessions')
+        .update({
+          title: input.title,
+          date: input.date,
+          type: input.type,
+          warm_up: input.warm_up || null,
+          main_set: input.main_set || null,
+          cool_down: input.cool_down || null,
+          notes: input.notes || null,
+        })
+        .eq('id', id)
+      if (error) throw error
+
+      if (swimmerIds !== undefined) {
+        await supabase.from('session_assignments').delete().eq('session_id', id)
+        if (swimmerIds.length > 0) {
+          const { error: assignErr } = await supabase
+            .from('session_assignments')
+            .insert(swimmerIds.map((swimmer_id) => ({ session_id: id, swimmer_id })))
+          if (assignErr) throw assignErr
+        }
+      }
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['sessions', user?.id] })
+      qc.invalidateQueries({ queryKey: ['session', vars.id] })
+      qc.invalidateQueries({ queryKey: ['session-assignments', vars.id] })
+    },
+  })
+}
+
+export function useDeleteSession() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('sessions').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sessions', user?.id] }),
   })
 }

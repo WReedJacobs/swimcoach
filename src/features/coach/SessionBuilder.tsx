@@ -1,12 +1,12 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Save, BookOpen, Gauge } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/cn'
-import { useCreateSession } from '@/hooks/useSessions'
+import { useCreateSession, useUpdateSession, useSession, useSessionAssignments } from '@/hooks/useSessions'
 import { useSwimmers } from '@/hooks/useSwimmers'
 import { useDrills } from '@/hooks/useDrills'
 import { swimmerName, DISTANCES } from '@/types'
@@ -16,9 +16,15 @@ import { buildSetTarget } from '@/lib/cssCalculator'
 
 export function SessionBuilder() {
   const navigate = useNavigate()
+  const { sessionId } = useParams<{ sessionId: string }>()
+  const isEditing = Boolean(sessionId)
+
   const createSession = useCreateSession()
+  const updateSession = useUpdateSession()
   const { data: swimmers } = useSwimmers()
   const { data: drills } = useDrills()
+  const { data: existingSession } = useSession(sessionId)
+  const { data: existingAssigned } = useSessionAssignments(sessionId)
 
   const [title, setTitle] = useState('')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
@@ -30,8 +36,6 @@ export function SessionBuilder() {
   const [assigned, setAssigned] = useState<string[]>([])
   const [drillPicker, setDrillPicker] = useState<null | 'warm_up' | 'cool_down'>(null)
 
-  // Pace-aware set calculator: turn a CSS pace into a formatted, send-off
-  // line that gets appended to the main set.
   const [paceOpen, setPaceOpen] = useState(false)
   const [cssPace, setCssPace] = useState('1:30')
   const [reps, setReps] = useState(8)
@@ -39,10 +43,28 @@ export function SessionBuilder() {
   const [offset, setOffset] = useState(2)
   const [rest, setRest] = useState(15)
 
+  // Pre-fill form when editing an existing session
+  useEffect(() => {
+    if (existingSession) {
+      setTitle(existingSession.title)
+      setDate(existingSession.date)
+      setType(existingSession.type)
+      setWarmUp(existingSession.warm_up ?? '')
+      setMainSet(existingSession.main_set ?? '')
+      setCoolDown(existingSession.cool_down ?? '')
+      setNotes(existingSession.notes ?? '')
+    }
+  }, [existingSession])
+
+  useEffect(() => {
+    if (existingAssigned) {
+      setAssigned(existingAssigned)
+    }
+  }, [existingAssigned])
+
   const cssSeconds = parseTime(cssPace)
   const previewSet =
     cssSeconds != null ? buildSetTarget(cssSeconds, reps, setDistance, offset, rest) : null
-
   const offsetLabel = offset > 0 ? `CSS+${offset}` : offset === 0 ? 'CSS' : `CSS${offset}`
 
   const insertPaceSet = () => {
@@ -65,7 +87,7 @@ export function SessionBuilder() {
 
   const save = async () => {
     if (!title.trim()) return
-    await createSession.mutateAsync({
+    const payload = {
       title,
       date,
       type,
@@ -74,9 +96,16 @@ export function SessionBuilder() {
       cool_down: coolDown,
       notes,
       swimmerIds: assigned,
-    })
+    }
+    if (isEditing && sessionId) {
+      await updateSession.mutateAsync({ id: sessionId, ...payload })
+    } else {
+      await createSession.mutateAsync(payload)
+    }
     navigate('/coach/sessions')
   }
+
+  const isPending = createSession.isPending || updateSession.isPending
 
   return (
     <div className="space-y-6">
@@ -90,7 +119,7 @@ export function SessionBuilder() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Card>
-            <CardHeader title="Session details" />
+            <CardHeader title={isEditing ? 'Edit session' : 'Session details'} />
             <div className="space-y-4">
               <Input label="Title" placeholder="Threshold Friday" value={title} onChange={(e) => setTitle(e.target.value)} />
               <div className="grid grid-cols-2 gap-3">
@@ -168,8 +197,8 @@ export function SessionBuilder() {
             )}
           </Card>
 
-          <Button className="w-full" size="lg" leftIcon={<Save className="h-5 w-5" />} loading={createSession.isPending} disabled={!title.trim()} onClick={save}>
-            Save session
+          <Button className="w-full" size="lg" leftIcon={<Save className="h-5 w-5" />} loading={isPending} disabled={!title.trim()} onClick={save}>
+            {isEditing ? 'Update session' : 'Save session'}
           </Button>
         </div>
       </div>

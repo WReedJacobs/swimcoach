@@ -31,3 +31,43 @@ export function useUpdateBookingStatus() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['bookings'] }),
   })
 }
+
+/** Swimmer: fetch their own booking requests (RLS filters by profile_id). */
+export function useMyBookings() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['my-bookings', user?.id],
+    enabled: Boolean(user),
+    queryFn: async (): Promise<Booking[]> => {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('requested_at', { ascending: false })
+      if (error) throw error
+      return (data ?? []) as Booking[]
+    },
+  })
+}
+
+export function useCreateBooking() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      swimmer_id,
+      coach_id,
+      notes,
+    }: {
+      swimmer_id: string
+      coach_id: string
+      notes?: string
+    }) => {
+      const { error } = await supabase.from('bookings').insert({
+        swimmer_id,
+        coach_id,
+        notes: notes ?? null,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-bookings'] }),
+  })
+}

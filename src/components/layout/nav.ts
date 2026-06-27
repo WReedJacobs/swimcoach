@@ -18,6 +18,9 @@ import {
   Gauge,
   type LucideIcon,
 } from 'lucide-react'
+
+// re-export so AppShell/MobileNav can import from one place
+export type { LucideIcon }
 import type { Role } from '@/types'
 
 export interface NavItem {
@@ -45,6 +48,7 @@ const swimmerNav: NavItem[] = [
   { label: 'My Times', to: '/swimmer/times', icon: Timer },
   { label: 'Goals', to: '/swimmer/goals', icon: Target },
   { label: 'CSS & Pace', mobileLabel: 'CSS', to: '/swimmer/css', icon: Gauge },
+  { label: 'Schedule', to: '/swimmer/schedule', icon: CalendarCheck },
   { label: 'Feedback', to: '/swimmer/feedback', icon: ClipboardList },
   { label: 'Achievements', mobileLabel: 'Awards', to: '/swimmer/achievements', icon: Trophy },
   { label: 'Drills', to: '/swimmer/drills', icon: Library },

@@ -48,3 +48,25 @@ export function useCreateFeedback() {
     },
   })
 }
+
+export function useDeleteFeedback() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('feedback').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['feedback'] }),
+  })
+}
+
+export function useToggleFeedbackPin() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, is_pinned }: { id: string; is_pinned: boolean }) => {
+      const { error } = await supabase.from('feedback').update({ is_pinned }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['feedback'] }),
+  })
+}
