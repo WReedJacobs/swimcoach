@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Trophy, Save, Plus, Timer, Table, Search, Gauge } from 'lucide-react'
+import { Trophy, Save, Plus, Timer, Table, Search, Gauge, X } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
@@ -330,6 +330,8 @@ function BulkMode({
   const update = (i: number, patch: Partial<BulkRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)))
 
+  const removeRow = (i: number) => setRows((prev) => prev.filter((_, idx) => idx !== i))
+
   const validRows = rows.filter((r) => r.swimmerId && parseTime(r.raw) != null)
 
   const saveAll = async () => {
@@ -373,7 +375,50 @@ function BulkMode({
         <SessionPicker sessions={sessions} value={sessionId} onChange={setSessionId} />
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Mobile: stacked cards */}
+      <div className="space-y-3 md:hidden">
+        {rows.map((r, i) => {
+          const invalid = r.raw.length > 0 && parseTime(r.raw) == null
+          return (
+            <div key={i} className="rounded-card border border-border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-text-muted">#{i + 1}</span>
+                <button
+                  onClick={() => removeRow(i)}
+                  className="rounded p-1 text-text-muted hover:text-danger"
+                  aria-label={`Remove row ${i + 1}`}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <Select value={r.swimmerId} onChange={(e) => update(i, { swimmerId: e.target.value })}>
+                {swimmers.map((s) => (
+                  <option key={s.id} value={s.id}>{swimmerName(s)}</option>
+                ))}
+              </Select>
+              <Select value={r.stroke} onChange={(e) => update(i, { stroke: e.target.value as Stroke })}>
+                {STROKES.map((s) => (
+                  <option key={s} value={s} className="capitalize">{s}</option>
+                ))}
+              </Select>
+              <Select value={r.distance} onChange={(e) => update(i, { distance: Number(e.target.value) })}>
+                {DISTANCES.map((d) => (
+                  <option key={d} value={d}>{d}m</option>
+                ))}
+              </Select>
+              <Input
+                placeholder="1:02.45"
+                value={r.raw}
+                onChange={(e) => update(i, { raw: e.target.value })}
+                error={invalid ? 'Invalid' : undefined}
+              />
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left font-mono text-xs uppercase tracking-[0.14em] text-text-muted">

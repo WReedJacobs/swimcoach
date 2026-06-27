@@ -160,6 +160,7 @@ export function WelcomePage() {
       <div style={{ position: 'relative', zIndex: 2 }}>
         {/* Sticky header */}
         <header
+          className="px-5 py-3 md:px-10 md:py-4"
           style={{
             position: 'sticky',
             top: 0,
@@ -168,7 +169,6 @@ export function WelcomePage() {
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 20,
-            padding: '16px 40px',
             background: v('--c-bg', 0.78),
             backdropFilter: 'blur(14px)',
             borderBottom: `1px solid ${v('--c-border')}`,
@@ -218,9 +218,9 @@ export function WelcomePage() {
 
         {/* Hero */}
         <section
+          className="px-5 py-10 md:px-10 md:py-[70px] md:pb-[60px]"
           style={{
             position: 'relative',
-            padding: '70px 40px 60px',
             maxWidth: 1280,
             margin: '0 auto',
             overflow: 'hidden',
@@ -350,7 +350,7 @@ export function WelcomePage() {
 
               {/* Metric strip */}
               <div className="animate-fade-up" style={{ marginTop: 44, animationDelay: '.26s' }}>
-                <div style={{ display: 'flex', gap: 34 }}>
+                <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: v('--c-text-muted') }}>
                       This week
@@ -495,7 +495,10 @@ export function WelcomePage() {
         </section>
 
         {/* Feature row */}
-        <section style={{ maxWidth: 1280, margin: '0 auto', padding: '30px 40px 90px' }}>
+        <section
+          className="px-5 py-8 md:px-10 md:py-[30px] md:pb-[90px]"
+          style={{ maxWidth: 1280, margin: '0 auto' }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 26 }}>
             <span style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase', color: v('--c-text-muted') }}>
               Built for the long game

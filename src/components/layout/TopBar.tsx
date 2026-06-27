@@ -43,7 +43,7 @@ export function TopBar({ title }: { title: string }) {
                 navigate('/')
               }}
             >
-              Sign out
+              <span className="hidden sm:inline">Sign out</span>
             </Button>
           </>
         ) : (

@@ -52,7 +52,7 @@ export function MessagesPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-7rem)]">
+    <div className="h-[calc(100dvh-8rem)] md:h-[calc(100vh-7rem)]">
       <Card padding={false} className="flex h-full flex-col overflow-hidden">
         <div className="border-b border-border px-4 py-3">
           <p className="font-medium text-text-primary">{coachName ?? 'Your coach'}</p>
@@ -83,7 +83,7 @@ export function MessagesPage() {
           )}
         </div>
 
-        <div className="flex gap-2 border-t border-border p-3">
+        <div className="flex gap-2 border-t border-border bg-surface p-3">
           <Input
             placeholder="Type a message…"
             value={draft}
