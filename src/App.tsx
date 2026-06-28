@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { AppShell } from '@/components/layout/AppShell'
 import { CursorFxLayer } from '@/components/CursorFxLayer'
-import { ProtectedRoute } from '@/components/RouteGuards'
+import { ProtectedRoute, AdminRoute } from '@/components/RouteGuards'
 
 // Marketing
 import { WelcomePage } from '@/features/marketing/WelcomePage'
@@ -46,6 +46,10 @@ import { FindCoachPage } from '@/features/beginner/FindCoachPage'
 import { PoolGuidePage } from '@/features/beginner/PoolGuidePage'
 import { TrainingBasicsPage } from '@/features/beginner/TrainingBasicsPage'
 import { FitnessProgramPage } from '@/features/beginner/FitnessProgramPage'
+
+// Admin
+import { AdminShell } from '@/features/admin/AdminShell'
+import { AdminDashboard } from '@/features/admin/AdminDashboard'
 
 // Shared
 import { DrillLibraryPage } from '@/features/shared/DrillLibraryPage'
@@ -127,6 +131,17 @@ export default function App() {
         <Route path="/beginner/log" element={<SelfLogPage />} />
         <Route path="/beginner/program" element={<FitnessProgramPage />} />
         <Route path="/beginner/find-coach" element={<FindCoachPage />} />
+      </Route>
+
+      {/* Admin */}
+      <Route
+        element={
+          <AdminRoute>
+            <AdminShell />
+          </AdminRoute>
+        }
+      >
+        <Route path="/admin" element={<AdminDashboard />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

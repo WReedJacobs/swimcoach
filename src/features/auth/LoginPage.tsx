@@ -55,7 +55,7 @@ export function LoginPage() {
   return (
     <AuthLayout
       title="Welcome back"
-      subtitle="Sign in to your SwimCoach account"
+      subtitle="Sign in to your Swimphoria account"
       footer={
         <>
           New here?{' '}
@@ -89,7 +89,7 @@ export function LoginPage() {
           label="Email"
           type="email"
           autoComplete="email"
-          placeholder="coach@swimcoach.app"
+          placeholder="coach@swimphoria.app"
           error={errors.email?.message}
           {...register('email')}
         />

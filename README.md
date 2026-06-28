@@ -1,4 +1,4 @@
-# SwimCoach 🏊
+# Swimphoria 🏊
 
 A full-stack web app for **coaches**, **swimmers**, and self-guided **beginners**. Built web-first with a React Native port in mind (pure Vite SPA, framework-agnostic types and helpers, no Next.js).
 

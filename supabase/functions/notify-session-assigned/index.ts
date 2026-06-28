@@ -42,7 +42,7 @@ serve(async (req) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'SwimCoach <onboarding@resend.dev>',
+      from: 'Swimphoria <onboarding@resend.dev>',
       to: swimmer.email,
       subject: `New session assigned: ${session.title}`,
       html: `
@@ -52,7 +52,7 @@ serve(async (req) => {
           <tr><td style="padding:4px 12px 4px 0;color:#888">Session</td><td><strong>${session.title}</strong></td></tr>
           <tr><td style="padding:4px 12px 4px 0;color:#888">Date</td><td>${sessionDate}</td></tr>
         </table>
-        <p><a href="https://swimcoach.app/swimmer/today">View your sessions</a></p>
+        <p><a href="https://swimphoria.app/swimmer/today">View your sessions</a></p>
       `,
     }),
   })

@@ -42,7 +42,7 @@ export function BeginnerHome() {
   return (
     <div className="space-y-8">
       <Card className="border-coral/20 bg-coral/5">
-        <h2 className="text-xl font-semibold text-text-primary">Welcome to SwimCoach</h2>
+        <h2 className="text-xl font-semibold text-text-primary">Welcome to Swimphoria</h2>
         <p className="mt-1 text-sm text-text-secondary">
           You don't need a coach to start. Read the guides, log your swims, and tick off milestones at your own pace.
         </p>

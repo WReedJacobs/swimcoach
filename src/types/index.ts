@@ -1,4 +1,4 @@
-// Shared domain types for SwimCoach.
+// Shared domain types for Swimphoria.
 // Kept framework-agnostic so they port cleanly to React Native.
 
 export type Role = 'coach' | 'swimmer' | 'beginner'
@@ -30,6 +30,7 @@ export interface Profile {
   level: Level | null
   coach_id: string | null
   join_code: string | null
+  is_admin: boolean
   created_at: string
 }
 

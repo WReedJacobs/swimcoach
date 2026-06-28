@@ -1,4 +1,4 @@
-# SwimCoach Design System — "Deepwater"
+# Swimphoria Design System — "Deepwater"
 
 A cyber-minimal, **dark-first** performance identity. The entire palette is
 delivered through a token layer (CSS variables + semantic Tailwind names), so
@@ -52,7 +52,7 @@ Tailwind mapping lives in `tailwind.config.js`.
 - **Tokens / theme:** `src/index.css`, `tailwind.config.js`
 - **Primitives (re-skin here, pages follow):** `src/components/ui/*`
 - **Global chrome:** `src/components/layout/*` (AppShell, Sidebar, TopBar)
-- **Brand lockup:** `src/components/BrandMark.tsx` — the glowing accent dot + "SwimCoach"
+- **Brand lockup:** `src/components/BrandMark.tsx` — the glowing accent dot + "Swimphoria"
   wordmark. Use it for ALL brand placements (hero, sidebar, auth) so the identity is
   identical everywhere; beginner mode passes `tone="coral"`. Don't hand-roll a logo.
 

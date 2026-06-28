@@ -24,25 +24,25 @@ const SW4 = '10000000-0000-0000-0000-000000000004'
 
 /** Demo accounts — any password works in local mode. */
 export const demoUsers = [
-  { id: COACH, email: 'coach@swimcoach.app', label: 'Coach (Alex Carter)' },
-  { id: SW2_P, email: 'jordan@swimcoach.app', label: 'Swimmer (Jordan Reed)' },
+  { id: COACH, email: 'coach@swimphoria.app', label: 'Coach (Alex Carter)' },
+  { id: SW2_P, email: 'jordan@swimphoria.app', label: 'Swimmer (Jordan Reed)' },
 ]
 
 export function buildFixtures() {
   return {
     users: [
-      { id: COACH, email: 'coach@swimcoach.app' },
-      { id: SW1_P, email: 'mia@swimcoach.app' },
-      { id: SW2_P, email: 'jordan@swimcoach.app' },
-      { id: SW3_P, email: 'sam@swimcoach.app' },
-      { id: SW4_P, email: 'taylor@swimcoach.app' },
+      { id: COACH, email: 'coach@swimphoria.app' },
+      { id: SW1_P, email: 'mia@swimphoria.app' },
+      { id: SW2_P, email: 'jordan@swimphoria.app' },
+      { id: SW3_P, email: 'sam@swimphoria.app' },
+      { id: SW4_P, email: 'taylor@swimphoria.app' },
     ],
     profiles: [
-      { id: COACH, full_name: 'Alex Carter', role: 'coach', avatar_url: null, level: null, coach_id: null, created_at: daysAgo(60) },
-      { id: SW1_P, full_name: 'Mia Lopez', role: 'swimmer', avatar_url: null, level: 'beginner', coach_id: COACH, created_at: daysAgo(50) },
-      { id: SW2_P, full_name: 'Jordan Reed', role: 'swimmer', avatar_url: null, level: 'intermediate', coach_id: COACH, created_at: daysAgo(50) },
-      { id: SW3_P, full_name: 'Sam Patel', role: 'swimmer', avatar_url: null, level: 'intermediate', coach_id: COACH, created_at: daysAgo(50) },
-      { id: SW4_P, full_name: 'Taylor Nguyen', role: 'swimmer', avatar_url: null, level: 'elite', coach_id: COACH, created_at: daysAgo(50) },
+      { id: COACH, full_name: 'Alex Carter', role: 'coach', avatar_url: null, level: null, coach_id: null, is_admin: true, created_at: daysAgo(60) },
+      { id: SW1_P, full_name: 'Mia Lopez', role: 'swimmer', avatar_url: null, level: 'beginner', coach_id: COACH, is_admin: false, created_at: daysAgo(50) },
+      { id: SW2_P, full_name: 'Jordan Reed', role: 'swimmer', avatar_url: null, level: 'intermediate', coach_id: COACH, is_admin: false, created_at: daysAgo(50) },
+      { id: SW3_P, full_name: 'Sam Patel', role: 'swimmer', avatar_url: null, level: 'intermediate', coach_id: COACH, is_admin: false, created_at: daysAgo(50) },
+      { id: SW4_P, full_name: 'Taylor Nguyen', role: 'swimmer', avatar_url: null, level: 'elite', coach_id: COACH, is_admin: false, created_at: daysAgo(50) },
     ],
     swimmers: [
       { id: SW1, coach_id: COACH, profile_id: SW1_P, display_name: 'Mia Lopez', invite_email: null, squad: 'Development', level: 'beginner', notes: 'New to squad, building endurance.', created_at: daysAgo(50) },

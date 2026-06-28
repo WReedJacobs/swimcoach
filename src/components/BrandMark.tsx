@@ -1,7 +1,7 @@
 import { cn } from '@/lib/cn'
 
 /**
- * The Deepwater brand lockup: a glowing accent dot + "SwimCoach" wordmark,
+ * The Deepwater brand lockup: a glowing accent dot + "Swimphoria" wordmark,
  * with an optional mono micro-label beneath. Used in the marketing hero,
  * the app sidebar, and the auth screens so the identity is identical
  * everywhere. Beginner mode tints the dot coral.
@@ -32,7 +32,7 @@ export function BrandMark({
           className="font-semibold leading-tight text-text-primary"
           style={{ letterSpacing: '0.04em' }}
         >
-          SwimCoach
+          Swimphoria
         </p>
         {tagline && (
           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">

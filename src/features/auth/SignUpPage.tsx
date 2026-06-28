@@ -39,7 +39,7 @@ export function SignUpPage() {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Join SwimCoach in seconds"
+      subtitle="Join Swimphoria in seconds"
       footer={
         <>
           Already have an account?{' '}

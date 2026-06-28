@@ -14,7 +14,7 @@ function titleForPath(role: Role | null, pathname: string): string {
     .sort((a, b) => b.to.length - a.to.length)[0]
   if (match) return match.label
   if (pathname.endsWith('/settings')) return 'Settings'
-  return 'SwimCoach'
+  return 'Swimphoria'
 }
 
 /** Null-render component that sets up realtime notifications for a swimmer. */

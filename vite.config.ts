@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'SwimCoach',
-        short_name: 'SwimCoach',
+        name: 'Swimphoria',
+        short_name: 'Swimphoria',
         description: 'Coaching tools for swimmers and coaches',
         theme_color: '#0a0f1e',
         background_color: '#0a0f1e',

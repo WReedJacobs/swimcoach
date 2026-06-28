@@ -33,7 +33,7 @@ export function RoleSelectPage() {
   }
 
   return (
-    <AuthLayout title="How will you use SwimCoach?" subtitle="You can change this later.">
+    <AuthLayout title="How will you use Swimphoria?" subtitle="You can change this later.">
       <div className="space-y-3">
         {options.map((opt) => (
           <button

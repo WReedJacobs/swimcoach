@@ -57,7 +57,7 @@ serve(async (req) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'SwimCoach <onboarding@resend.dev>',
+      from: 'Swimphoria <onboarding@resend.dev>',
       to: swimmerProfile.email,
       subject: isPB
         ? `New personal best! ${event} — ${timeStr}`
@@ -72,7 +72,7 @@ serve(async (req) => {
           <tr><td style="padding:4px 12px 4px 0;color:#888">Event</td><td><strong>${event}</strong></td></tr>
           <tr><td style="padding:4px 12px 4px 0;color:#888">Time</td><td><strong style="font-family:monospace">${timeStr}</strong></td></tr>
         </table>
-        <p><a href="https://swimcoach.app/swimmer/times">View your times</a></p>
+        <p><a href="https://swimphoria.app/swimmer/times">View your times</a></p>
       `,
     }),
   })

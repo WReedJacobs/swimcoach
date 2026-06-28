@@ -21,6 +21,7 @@ export function useAuth() {
     user: session?.user ?? null,
     role: profile?.role ?? null,
     isAuthenticated: Boolean(session),
+    isAdmin: Boolean(profile?.is_admin),
     loading,
     initialized,
     signIn,

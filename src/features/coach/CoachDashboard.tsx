@@ -87,7 +87,7 @@ export function CoachDashboard() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Users className="h-7 w-7" />
           </div>
-          <h2 className="text-xl font-semibold text-text-primary">Welcome to SwimCoach</h2>
+          <h2 className="text-xl font-semibold text-text-primary">Welcome to Swimphoria</h2>
           <p className="mx-auto mt-2 max-w-sm text-sm text-text-secondary">
             Add your first swimmer to get started. Share your join code and they can connect instantly.
           </p>

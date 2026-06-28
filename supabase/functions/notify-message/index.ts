@@ -37,16 +37,16 @@ serve(async (req) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'SwimCoach <onboarding@resend.dev>',
+      from: 'Swimphoria <onboarding@resend.dev>',
       to: msg.recipient.email,
       subject: `New message from ${senderName}`,
       html: `
         <p>Hi ${recipientName},</p>
-        <p><strong>${senderName}</strong> sent you a message on SwimCoach:</p>
+        <p><strong>${senderName}</strong> sent you a message on Swimphoria:</p>
         <blockquote style="border-left:3px solid #00c9a7;padding-left:12px;color:#555">
           ${msg.content}
         </blockquote>
-        <p><a href="https://swimcoach.app/coach/messages">Open SwimCoach</a></p>
+        <p><a href="https://swimphoria.app/coach/messages">Open Swimphoria</a></p>
       `,
     }),
   })

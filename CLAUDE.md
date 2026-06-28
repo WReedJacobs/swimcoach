@@ -1,4 +1,4 @@
-# SwimCoach
+# Swimphoria
 
 A full-stack web app for coaches, swimmers, and self-guided beginners.
 React 18 + TypeScript + Vite · Tailwind v3 · Supabase · Zustand + TanStack Query.

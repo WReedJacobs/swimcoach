@@ -17,7 +17,7 @@ export const isLocalMode = !hasSupabaseConfig
 
 if (isLocalMode) {
   console.info(
-    '[SwimCoach] Running in LOCAL MODE — data is stored in your browser. ' +
+    '[Swimphoria] Running in LOCAL MODE — data is stored in your browser. ' +
       'Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env to use a real Supabase project.',
   )
 }

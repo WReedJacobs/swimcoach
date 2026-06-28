@@ -58,6 +58,6 @@ Insert a test row into each table and check **Edge Functions → Logs** to confi
 
 ## Notes
 
-- Emails are sent from `notifications@swimcoach.app` — you must verify this domain in Resend before it will deliver.
+- Emails are sent from `notifications@swimphoria.app` — you must verify this domain in Resend before it will deliver.
 - Each function uses `SUPABASE_SERVICE_ROLE_KEY` to bypass RLS for profile lookups, so it can read any user's email. The key is never exposed to the client.
 - The functions are idempotent on re-delivery — a duplicate webhook fires a duplicate email, but Supabase webhooks have at-least-once delivery guarantees so this is rare.

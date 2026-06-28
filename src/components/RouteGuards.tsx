@@ -34,6 +34,15 @@ export function ProtectedRoute({
   return <>{children}</>
 }
 
+/** Requires the user to be authenticated and have is_admin = true. */
+export function AdminRoute({ children }: { children: ReactNode }) {
+  const { initialized, isAuthenticated, profile } = useAuth()
+  if (!initialized) return <FullPageLoader />
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (!profile?.is_admin) return <Navigate to={profile?.role ? `/${profile.role}` : '/'} replace />
+  return <>{children}</>
+}
+
 /** Sends an authenticated user to their role's home; used for "/" and auth pages. */
 export function HomeRedirect() {
   const { initialized, isAuthenticated, profile } = useAuth()
