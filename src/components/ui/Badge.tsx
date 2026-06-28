@@ -38,6 +38,7 @@ export function Badge({
 const levelTone: Record<Level, Tone> = {
   beginner: 'coral',
   intermediate: 'blue',
+  advanced: 'amber',
   elite: 'green',
 }
 

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { cn } from '@/lib/cn'
 
 function initials(name: string): string {
@@ -24,11 +25,14 @@ export function Avatar({
   size?: keyof typeof sizes
   className?: string
 }) {
-  if (url) {
+  const [imgError, setImgError] = useState(false)
+
+  if (url && !imgError) {
     return (
       <img
         src={url}
         alt={name}
+        onError={() => setImgError(true)}
         className={cn('rounded-full object-cover', sizes[size], className)}
       />
     )
@@ -36,7 +40,7 @@ export function Avatar({
   return (
     <div
       className={cn(
-        'flex items-center justify-center rounded-full bg-primary/10 font-semibold text-primary-dark',
+        'flex shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary-dark',
         sizes[size],
         className,
       )}

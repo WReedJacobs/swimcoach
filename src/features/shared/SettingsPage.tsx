@@ -14,7 +14,10 @@ export function SettingsPage() {
   const navigate = useNavigate()
 
   const [name, setName] = useState(profile?.full_name ?? '')
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? '')
+  const storedAvatar = profile?.avatar_url ?? ''
+  const [avatarUrl, setAvatarUrl] = useState(
+    storedAvatar.startsWith('http') ? storedAvatar : '',
+  )
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMsg, setProfileMsg] = useState<{ ok: boolean; text: string } | null>(null)
 

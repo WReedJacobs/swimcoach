@@ -38,6 +38,7 @@ const v = (name: string, alpha?: number) =>
 const LEVEL_ICON: Record<Level, typeof Waves> = {
   beginner: Sparkles,
   intermediate: Waves,
+  advanced: Trophy,
   elite: Trophy,
 }
 

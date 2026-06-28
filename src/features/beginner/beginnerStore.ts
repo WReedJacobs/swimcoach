@@ -34,5 +34,5 @@ export function useMilestones() {
 }
 
 export function useBeginnerGoal() {
-  return useLocalStorage<number>('sc_beginner_goal', 1000)
+  return useLocalStorage<number>('sc_beginner_goal', 1500)
 }

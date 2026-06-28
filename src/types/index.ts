@@ -2,7 +2,7 @@
 // Kept framework-agnostic so they port cleanly to React Native.
 
 export type Role = 'coach' | 'swimmer' | 'beginner'
-export type Level = 'beginner' | 'intermediate' | 'elite'
+export type Level = 'beginner' | 'intermediate' | 'advanced' | 'elite'
 export type Stroke =
   | 'freestyle'
   | 'backstroke'
@@ -102,6 +102,7 @@ export interface Drill {
   description_technical: string
   stroke: Stroke | null
   level: Level | null
+  focus: string | null
   video_url: string | null
   created_at: string
 }

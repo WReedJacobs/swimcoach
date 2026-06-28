@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Lightbulb, AlertTriangle, MessageCircle } from 'lucide-react'
+import { Lightbulb, AlertTriangle, MessageCircle, Dumbbell, ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { cn } from '@/lib/cn'
@@ -83,6 +84,29 @@ export function StrokeGuidesPage() {
           </table>
         </div>
       </Card>
+
+      {guide.drills && guide.drills.length > 0 && (
+        <Card>
+          <div className="mb-3 flex items-center gap-2 font-semibold text-text-primary">
+            <Dumbbell className="h-5 w-5 text-coral" /> Related drills
+          </div>
+          <p className="mb-3 text-sm text-text-secondary">
+            Practice these drills in the pool to build {guide.stroke.toLowerCase()} technique.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {guide.drills.map((drill) => (
+              <Link
+                key={drill}
+                to={`/beginner/drills?stroke=${guide.stroke.toLowerCase()}`}
+                className="inline-flex items-center gap-1.5 rounded-component border border-border bg-surface px-3 py-1.5 text-sm text-text-secondary transition-colors hover:border-coral/40 hover:bg-coral/5 hover:text-text-primary"
+              >
+                {drill}
+                <ArrowRight className="h-3 w-3 text-text-muted" />
+              </Link>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   )
 }

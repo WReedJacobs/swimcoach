@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Map } from 'lucide-react'
+import { ArrowRight, Map, BookOpen } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
@@ -54,7 +54,7 @@ export function BeginnerHome() {
   }, [logs])
 
   // Auto-mark set_goal when goal has been changed from default or goal exists
-  // (goal always exists since it defaults to 1000 — only mark if user explicitly set it)
+  // (goal always exists since it defaults to 1500 — only mark if user explicitly set it)
 
   const totalSteps = ALL_STEP_IDS.length
   const doneCount = completedSteps.length
@@ -73,6 +73,34 @@ export function BeginnerHome() {
 
   return (
     <div className="space-y-8">
+      {/* Start here prompt — shown only when user has no logs and journey is just beginning */}
+      {logs.length === 0 && doneCount === 0 && (
+        <div className="flex items-start gap-3 rounded-card border border-primary/20 bg-primary/5 px-4 py-3">
+          <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-text-primary">New here? Start with the Pool Guide.</p>
+            <p className="mt-0.5 text-xs text-text-secondary">
+              It covers lane etiquette, equipment, and what to expect in your first session.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Link
+                to="/beginner/pool-guide"
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                Pool Guide <ArrowRight className="h-3 w-3" />
+              </Link>
+              <span className="text-xs text-text-muted">·</span>
+              <Link
+                to="/beginner/log"
+                className="inline-flex items-center gap-1 text-xs font-medium text-coral hover:underline"
+              >
+                Log your first swim <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Graduation banner (persistent after modal dismissed) */}
       {showGradBanner && (
         <div className="flex items-center justify-between gap-4 rounded-card border border-secondary/30 bg-secondary/5 px-4 py-3">

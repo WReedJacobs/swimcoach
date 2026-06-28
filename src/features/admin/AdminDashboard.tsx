@@ -80,7 +80,7 @@ const roleTone: Record<Role, 'blue' | 'green' | 'coral'> = {
 }
 
 const ROLES: Role[] = ['coach', 'swimmer', 'beginner']
-const LEVELS: Level[] = ['beginner', 'intermediate', 'elite']
+const LEVELS: Level[] = ['beginner', 'intermediate', 'advanced', 'elite']
 
 type Tab = 'Overview' | 'Users' | 'Coaches' | 'Drills' | 'Activity' | 'Bookings' | 'Ratings'
 const TABS: Tab[] = ['Overview', 'Users', 'Coaches', 'Drills', 'Activity', 'Bookings', 'Ratings']
@@ -807,6 +807,7 @@ function DrillsTab() {
       description_technical: form.description_technical.trim(),
       stroke: (form.stroke || null) as Stroke | null,
       level: (form.level || null) as Level | null,
+      focus: null as string | null,
       video_url: form.video_url.trim() || null,
     }
     if (id) {

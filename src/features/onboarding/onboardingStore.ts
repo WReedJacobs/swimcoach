@@ -38,6 +38,13 @@ export const LEVEL_TEMPLATES: Record<Level, LevelTemplate> = {
     weeklyGoalMeters: 6000,
     session: { stroke: 'freestyle', distanceMeters: 800, timeSeconds: 840, setLabel: '8 × 100m freestyle' },
   },
+  advanced: {
+    level: 'advanced',
+    title: 'Advanced',
+    blurb: 'Strong fitness base, training regularly',
+    weeklyGoalMeters: 12000,
+    session: { stroke: 'freestyle', distanceMeters: 1000, timeSeconds: 960, setLabel: '10 × 100m at CSS pace' },
+  },
   elite: {
     level: 'elite',
     title: 'Elite',

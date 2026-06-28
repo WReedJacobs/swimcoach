@@ -35,6 +35,20 @@ function bestAny400(times: SwimTime[]): number | null {
   return relevant.length ? Math.min(...relevant.map((t) => t.time_seconds)) : null
 }
 
+function maxSessionsInWeek(times: SwimTime[]): number {
+  if (!times.length) return 0
+  const counts = new Map<string, number>()
+  for (const t of times) {
+    const d = new Date(t.recorded_at)
+    const yr = d.getFullYear()
+    const jan1 = new Date(yr, 0, 1)
+    const wk = Math.ceil(((d.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7)
+    const key = `${yr}-W${wk}`
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  return Math.max(0, ...[...counts.values()])
+}
+
 function speedProgress(best: number | null, threshold: number): number {
   if (best === null) return 0
   return Math.min(99, (threshold / best) * 100)
@@ -81,10 +95,37 @@ const ALL_ACHIEVEMENTS: AchievementDef[] = [
     progressPct: (_, d) => Math.min(99, (d / 10_000) * 100),
   },
   {
+    id: '25k-swimmer',
+    title: '25K Swimmer',
+    description: 'Log 25,000m total distance',
+    icon: Medal,
+    category: 'milestone',
+    earned: (_, d) => d >= 25_000,
+    progressPct: (_, d) => Math.min(99, (d / 25_000) * 100),
+  },
+  {
+    id: '50k-swimmer',
+    title: '50K Swimmer',
+    description: 'Log 50,000m total distance',
+    icon: Trophy,
+    category: 'milestone',
+    earned: (_, d) => d >= 50_000,
+    progressPct: (_, d) => Math.min(99, (d / 50_000) * 100),
+  },
+  {
+    id: 'century-club',
+    title: 'Century Club',
+    description: 'Log 100,000m total — 100km in the pool',
+    icon: Star,
+    category: 'milestone',
+    earned: (_, d) => d >= 100_000,
+    progressPct: (_, d) => Math.min(99, (d / 100_000) * 100),
+  },
+  {
     id: 'marathon-swimmer',
     title: 'Marathon Swimmer',
     description: 'Log 42,195m total — a full marathon in the pool',
-    icon: Trophy,
+    icon: Award,
     category: 'milestone',
     earned: (_, d) => d >= 42_195,
     progressPct: (_, d) => Math.min(99, (d / 42_195) * 100),
@@ -126,6 +167,33 @@ const ALL_ACHIEVEMENTS: AchievementDef[] = [
     category: 'speed',
     earned: (t) => { const b = bestFor(t, 50, 'freestyle'); return b !== null && b < 40 },
     progressPct: (t) => speedProgress(bestFor(t, 50, 'freestyle'), 40),
+  },
+  {
+    id: 'sub-35s-50-free',
+    title: 'Sub-35s 50m Free',
+    description: 'Swim 50m freestyle in under 35 seconds',
+    icon: Zap,
+    category: 'speed',
+    earned: (t) => { const b = bestFor(t, 50, 'freestyle'); return b !== null && b < 35 },
+    progressPct: (t) => speedProgress(bestFor(t, 50, 'freestyle'), 35),
+  },
+  {
+    id: 'sub-30s-50-free',
+    title: 'Sub-30s 50m Free',
+    description: 'Swim 50m freestyle in under 30 seconds — elite territory',
+    icon: Zap,
+    category: 'speed',
+    earned: (t) => { const b = bestFor(t, 50, 'freestyle'); return b !== null && b < 30 },
+    progressPct: (t) => speedProgress(bestFor(t, 50, 'freestyle'), 30),
+  },
+  {
+    id: 'first-butterfly',
+    title: 'First Fly',
+    description: 'Log a butterfly time — the hardest stroke',
+    icon: Award,
+    category: 'speed',
+    earned: (t) => t.some((x) => x.stroke === 'butterfly'),
+    progressPct: (t) => (t.some((x) => x.stroke === 'butterfly') ? 100 : 0),
   },
   {
     id: 'sub-3min-200-free',
@@ -182,6 +250,15 @@ const ALL_ACHIEVEMENTS: AchievementDef[] = [
     category: 'consistency',
     earned: (t) => t.length >= 100,
     progressPct: (t) => Math.min(99, (t.length / 100) * 100),
+  },
+  {
+    id: 'weekly-habit',
+    title: 'Weekly Habit',
+    description: 'Log 4 or more sessions in a single week',
+    icon: CalendarDays,
+    category: 'consistency',
+    earned: (t) => maxSessionsInWeek(t) >= 4,
+    progressPct: (t) => Math.min(99, (maxSessionsInWeek(t) / 4) * 100),
   },
 
   // ── Variety (stroke diversity) ────────────────────────────────────────────
@@ -312,14 +389,14 @@ export function AchievementsPage() {
   const { data: swimmer } = useMySwimmer()
   const { data: times } = useTimes(swimmer?.id)
 
-  const { earned, comingUp, locked } = useMemo(() => {
+  const { earned, comingUp, locked, total } = useMemo(() => {
     const evaluated = evaluate(times ?? [])
     const earnedList = evaluated.filter((a) => a.isEarned)
     const unearned = evaluated.filter((a) => !a.isEarned).sort((a, b) => b.pct - a.pct)
-    const comingUpList = unearned.filter((a) => a.pct > 0).slice(0, 4)
+    const comingUpList = unearned.filter((a) => a.pct > 0).slice(0, 6)
     const comingUpIds = new Set(comingUpList.map((a) => a.id))
     const lockedList = unearned.filter((a) => !comingUpIds.has(a.id))
-    return { earned: earnedList, comingUp: comingUpList, locked: lockedList }
+    return { earned: earnedList, comingUp: comingUpList, locked: lockedList, total: evaluated.length }
   }, [times])
 
   return (
@@ -339,7 +416,7 @@ export function AchievementsPage() {
 
       {earned.length > 0 && (
         <div>
-          <SectionHeader kicker={`Earned · ${earned.length}`} />
+          <SectionHeader kicker={`Earned · ${earned.length} of ${total}`} />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {earned.map((a) => <EarnedTile key={a.id} a={a} />)}
           </div>
