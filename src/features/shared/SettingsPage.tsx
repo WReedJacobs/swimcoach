@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Save, Lock, LogOut } from 'lucide-react'
+import { Save, Lock, LogOut, RefreshCw } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -160,19 +160,35 @@ export function SettingsPage() {
 
       <div>
         <SectionHeader kicker="Account" />
-        <Card>
-          <CardHeader title="Sign out" subtitle="You'll be returned to the home page." />
-          <Button
-            variant="danger"
-            leftIcon={<LogOut className="h-4 w-4" />}
-            onClick={async () => {
-              await signOut()
-              navigate('/')
-            }}
-          >
-            Sign out
-          </Button>
-        </Card>
+        <div className="space-y-4">
+          <Card>
+            <CardHeader
+              title="Switch role"
+              subtitle={`Currently signed in as ${profile?.role ?? 'beginner'}. Change to swimmer or coach.`}
+            />
+            <Button
+              variant="secondary"
+              leftIcon={<RefreshCw className="h-4 w-4" />}
+              onClick={() => navigate('/role-select')}
+            >
+              Change my role
+            </Button>
+          </Card>
+
+          <Card>
+            <CardHeader title="Sign out" subtitle="You'll be returned to the home page." />
+            <Button
+              variant="danger"
+              leftIcon={<LogOut className="h-4 w-4" />}
+              onClick={async () => {
+                await signOut()
+                navigate('/')
+              }}
+            >
+              Sign out
+            </Button>
+          </Card>
+        </div>
       </div>
     </div>
   )

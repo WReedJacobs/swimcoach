@@ -20,6 +20,7 @@ import {
   Gauge,
   MapPin,
   NotebookPen,
+  Settings,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -74,6 +75,7 @@ const beginnerNav: NavItem[] = [
   { label: 'Glossary', to: '/beginner/glossary', icon: Search },
   { label: 'Milestones', to: '/beginner/milestones', icon: Flag },
   { label: 'Find a Coach', mobileLabel: 'Find Coach', to: '/beginner/find-coach', icon: Users },
+  { label: 'Settings', to: '/beginner/settings', icon: Settings },
 ]
 
 export function navForRole(role: Role | null): NavItem[] {

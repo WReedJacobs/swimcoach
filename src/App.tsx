@@ -145,6 +145,7 @@ export default function App() {
         <Route path="/beginner/log" element={<SelfLogPage />} />
         <Route path="/beginner/program" element={<FitnessProgramPage />} />
         <Route path="/beginner/find-coach" element={<FindCoachPage />} />
+        <Route path="/beginner/settings" element={<SettingsPage />} />
       </Route>
 
       {/* Admin */}
