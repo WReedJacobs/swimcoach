@@ -46,6 +46,12 @@ export function DrillLibraryPage() {
         <SectionHeader kicker="DRILLS" />
         {isLoading ? (
           <Card>Loading drills…</Card>
+        ) : filtered.length === 0 && (drills ?? []).length === 0 && profile?.role === 'coach' ? (
+          <EmptyState
+            icon={<Library className="h-6 w-6" />}
+            title="No drills yet"
+            description="The drill library is seeded from your database. Make sure to run the seed.sql file, or add drills directly in the Supabase dashboard."
+          />
         ) : filtered.length === 0 ? (
           <EmptyState icon={<Library className="h-6 w-6" />} title="No drills found" description="Try clearing your filters." />
         ) : (

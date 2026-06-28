@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { CalendarDays, Plus, Trophy, CheckCircle2, Check } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
@@ -187,7 +188,18 @@ export function TodaySessionPage() {
               )}
             </div>
           ) : (
-            <EmptyState icon={<CalendarDays className="h-6 w-6" />} title="No session scheduled today" />
+            <EmptyState
+              icon={<CalendarDays className="h-6 w-6" />}
+              title="No session today"
+              description="Rest day! Or log a swim of your own to keep your streak going."
+              action={
+                <Link to="/swimmer/times">
+                  <Button variant="outline" size="sm" leftIcon={<Plus className="h-4 w-4" />}>
+                    Log a swim
+                  </Button>
+                </Link>
+              }
+            />
           )}
         </Card>
       </div>

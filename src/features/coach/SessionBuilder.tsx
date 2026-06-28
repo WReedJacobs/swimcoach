@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Save, BookOpen, Gauge, Repeat2 } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -50,6 +50,7 @@ function addWeeks(dateStr: string, weeks: number): string {
 export function SessionBuilder() {
   const navigate = useNavigate()
   const { sessionId } = useParams<{ sessionId: string }>()
+  const [searchParams] = useSearchParams()
   const isEditing = Boolean(sessionId)
   const { user } = useAuth()
 
@@ -93,6 +94,15 @@ export function SessionBuilder() {
       setNotes(existingSession.notes ?? '')
     }
   }, [existingSession])
+
+  // Pre-fill from booking query params (date + swimmerId)
+  useEffect(() => {
+    const prefillDate = searchParams.get('date')
+    const prefillSwimmer = searchParams.get('swimmerId')
+    if (prefillDate) setDate(prefillDate)
+    if (prefillSwimmer) setAssigned([prefillSwimmer])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (existingAssigned) {

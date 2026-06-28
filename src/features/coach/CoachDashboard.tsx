@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, CalendarDays, Trophy, Timer, ArrowRight, Plus } from 'lucide-react'
+import { Users, CalendarDays, Trophy, Timer, ArrowRight, Plus, Copy } from 'lucide-react'
 import { StatTile } from '@/components/ui/StatTile'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Card, CardHeader } from '@/components/ui/Card'
@@ -15,19 +15,21 @@ import { useSessions, useTodaySession } from '@/hooks/useSessions'
 import { useTimes } from '@/hooks/useTimes'
 import { useGoalsForSwimmers } from '@/hooks/useGoals'
 import { useUnreadCount } from '@/hooks/useMessages'
+import { useAuth } from '@/hooks/useAuth'
 import { fastestByEvent } from '@/lib/pbDetector'
 import { formatTime } from '@/lib/formatTime'
 import { swimmerName } from '@/types'
 
 function startOfWeek(): Date {
   const d = new Date()
-  const day = (d.getDay() + 6) % 7 // Monday = 0
+  const day = (d.getDay() + 6) % 7
   d.setHours(0, 0, 0, 0)
   d.setDate(d.getDate() - day)
   return d
 }
 
 export function CoachDashboard() {
+  const { profile } = useAuth()
   const { data: swimmers, isLoading: loadingSwimmers } = useSwimmers()
   const { data: sessions } = useSessions()
   const { todaySession } = useTodaySession()
@@ -58,7 +60,6 @@ export function CoachDashboard() {
     }
   }, [swimmers, sessions, times, unread])
 
-  // Top 4 swimmers with a goal → progress toward target (lower time = better).
   const progressRows = useMemo(() => {
     if (!swimmers || !times || !goals) return []
     return swimmers
@@ -76,6 +77,42 @@ export function CoachDashboard() {
   }, [swimmers, times, goals])
 
   const recent = useMemo(() => (swimmers ?? []).slice(-5).reverse(), [swimmers])
+
+  // Show focused onboarding when the coach has no swimmers yet
+  if (!loadingSwimmers && swimmers?.length === 0) {
+    return (
+      <div className="space-y-8">
+        <SectionHeader kicker="Overview" />
+        <Card className="py-10 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Users className="h-7 w-7" />
+          </div>
+          <h2 className="text-xl font-semibold text-text-primary">Welcome to SwimCoach</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-text-secondary">
+            Add your first swimmer to get started. Share your join code and they can connect instantly.
+          </p>
+          <div className="mt-6 flex flex-col items-center gap-3">
+            {profile?.join_code && (
+              <div className="flex items-center gap-3 rounded-component border border-border bg-bg px-4 py-2">
+                <span className="font-mono text-xs uppercase tracking-[0.14em] text-text-muted">Your join code</span>
+                <span className="font-mono text-xl font-bold tracking-[0.2em] text-primary">{profile.join_code}</span>
+                <button
+                  onClick={() => navigator.clipboard.writeText(profile.join_code!)}
+                  className="text-text-muted hover:text-primary"
+                  title="Copy join code"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            <Link to="/coach/roster">
+              <Button leftIcon={<Plus className="h-4 w-4" />}>Add swimmer manually</Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">

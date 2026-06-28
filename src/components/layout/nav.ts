@@ -16,6 +16,7 @@ import {
   Search,
   Flag,
   Gauge,
+  MapPin,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -57,11 +58,13 @@ const swimmerNav: NavItem[] = [
 
 const beginnerNav: NavItem[] = [
   { label: 'Home', to: '/beginner', icon: Waves },
+  { label: 'Pool Guide', mobileLabel: 'Pool', to: '/beginner/pool-guide', icon: MapPin },
+  { label: 'Training Basics', mobileLabel: 'Training', to: '/beginner/training', icon: Gauge },
   { label: 'Stroke Guides', mobileLabel: 'Strokes', to: '/beginner/strokes', icon: BookOpen },
-  { label: 'Glossary', to: '/beginner/glossary', icon: Search },
-  { label: 'Milestones', to: '/beginner/milestones', icon: Flag },
   { label: 'Log a Swim', mobileLabel: 'Log', to: '/beginner/log', icon: Timer },
   { label: '4-Week Program', mobileLabel: 'Program', to: '/beginner/program', icon: GraduationCap },
+  { label: 'Glossary', to: '/beginner/glossary', icon: Search },
+  { label: 'Milestones', to: '/beginner/milestones', icon: Flag },
   { label: 'Find a Coach', mobileLabel: 'Find Coach', to: '/beginner/find-coach', icon: Users },
 ]
 

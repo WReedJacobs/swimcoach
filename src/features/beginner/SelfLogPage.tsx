@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Timer, Trash2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
@@ -22,7 +23,6 @@ export function SelfLogPage() {
     const seconds = parseTime(raw)
     if (seconds == null) return
     setLogs((prev) => [
-      // No crypto/Date.now constraints here — this is app runtime, not a workflow.
       { id: `${date}-${Math.round(seconds * 100)}-${prev.length}`, date, stroke, distance, timeSeconds: seconds },
       ...prev,
     ])
@@ -36,7 +36,7 @@ export function SelfLogPage() {
     <SectionHeader kicker="Log" />
     <div className="grid gap-6 lg:grid-cols-2">
       <Card>
-        <CardHeader title="Log a swim" subtitle="Saved on this device. Sign in later to sync." />
+        <CardHeader title="Log a swim" subtitle="Your swims are saved on this device. Create a free account to back them up." />
         <div className="space-y-4">
           <Input label="Date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           <div className="grid grid-cols-2 gap-3">
@@ -88,6 +88,22 @@ export function SelfLogPage() {
         )}
       </Card>
     </div>
+
+    {logs.length > 0 && (
+      <Card className="border-coral/30 bg-coral/5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="font-semibold text-text-primary">Back up your swims</p>
+            <p className="text-sm text-text-secondary">
+              Create a free account to save your progress across devices and connect with a coach.
+            </p>
+          </div>
+          <Link to="/start">
+            <Button accent="coral" size="sm">Get started</Button>
+          </Link>
+        </div>
+      </Card>
+    )}
     </div>
   )
 }

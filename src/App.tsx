@@ -42,8 +42,10 @@ import { StrokeGuidesPage } from '@/features/beginner/StrokeGuidesPage'
 import { GlossaryPage } from '@/features/beginner/GlossaryPage'
 import { MilestonesPage } from '@/features/beginner/MilestonesPage'
 import { SelfLogPage } from '@/features/beginner/SelfLogPage'
-import { BeginnerProgram } from '@/features/beginner/BeginnerProgram'
 import { FindCoachPage } from '@/features/beginner/FindCoachPage'
+import { PoolGuidePage } from '@/features/beginner/PoolGuidePage'
+import { TrainingBasicsPage } from '@/features/beginner/TrainingBasicsPage'
+import { FitnessProgramPage } from '@/features/beginner/FitnessProgramPage'
 
 // Shared
 import { DrillLibraryPage } from '@/features/shared/DrillLibraryPage'
@@ -117,11 +119,13 @@ export default function App() {
       {/* Beginner — public, no auth required */}
       <Route element={<AppShell role="beginner" />}>
         <Route path="/beginner" element={<BeginnerHome />} />
+        <Route path="/beginner/pool-guide" element={<PoolGuidePage />} />
+        <Route path="/beginner/training" element={<TrainingBasicsPage />} />
         <Route path="/beginner/strokes" element={<StrokeGuidesPage />} />
         <Route path="/beginner/glossary" element={<GlossaryPage />} />
         <Route path="/beginner/milestones" element={<MilestonesPage />} />
         <Route path="/beginner/log" element={<SelfLogPage />} />
-        <Route path="/beginner/program" element={<BeginnerProgram />} />
+        <Route path="/beginner/program" element={<FitnessProgramPage />} />
         <Route path="/beginner/find-coach" element={<FindCoachPage />} />
       </Route>
 

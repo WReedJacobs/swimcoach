@@ -70,8 +70,8 @@ function JoinCoachCard() {
   return (
     <Card>
       <CardHeader
-        title="Join your coach"
-        subtitle="Ask your coach for their 6-character join code and enter it below."
+        title="Connect to your coach"
+        subtitle="Ask your coach for their 6-character join code. Once connected, your sessions and feedback will appear here."
       />
       <div className="flex items-start gap-3">
         <div className="flex-1">

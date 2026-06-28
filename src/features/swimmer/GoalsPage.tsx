@@ -103,21 +103,21 @@ export function GoalsPage() {
               const pct = current ? Math.min(100, (g.target_time_seconds / current.time_seconds) * 100) : 0
               const hit = current ? current.time_seconds <= g.target_time_seconds : false
               return (
-                <Card key={g.id} className="group">
+                <Card key={g.id}>
                   <div className="mb-2 flex items-center justify-between">
                     <h3 className="font-semibold capitalize text-text-primary">{g.distance}m {g.stroke}</h3>
                     <div className="flex items-center gap-1">
                       {hit && <CheckCircle2 className="h-5 w-5 text-secondary" />}
                       <button
                         onClick={() => openEdit(g)}
-                        className="hidden rounded p-1 text-text-muted hover:text-text-primary group-hover:flex"
+                        className="flex rounded p-1 text-text-muted hover:text-text-primary"
                         title="Edit goal"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => setConfirmDelete(g)}
-                        className="hidden rounded p-1 text-text-muted hover:text-danger group-hover:flex"
+                        className="flex rounded p-1 text-text-muted hover:text-danger"
                         title="Delete goal"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -166,14 +166,13 @@ export function GoalsPage() {
         </div>
       </Modal>
 
-      {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setConfirmDelete(null)}>
-          <div className="w-full max-w-sm rounded-card bg-surface p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="font-semibold text-text-primary">Delete goal?</p>
-            <p className="mt-1 text-sm text-text-secondary">
+      <Modal open={confirmDelete !== null} onClose={() => setConfirmDelete(null)} title="Delete goal?">
+        {confirmDelete && (
+          <div className="space-y-4">
+            <p className="text-sm text-text-secondary">
               {confirmDelete.distance}m {confirmDelete.stroke} — target {formatTime(confirmDelete.target_time_seconds)}
             </p>
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setConfirmDelete(null)}>Cancel</Button>
               <Button
                 variant="danger"
@@ -188,8 +187,8 @@ export function GoalsPage() {
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   )
 }

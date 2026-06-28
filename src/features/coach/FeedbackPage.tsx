@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ClipboardList, Send, Pin } from 'lucide-react'
+import { ClipboardList, Send, Pin, Trash2 } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
@@ -7,13 +7,15 @@ import { Select, Textarea } from '@/components/ui/Input'
 import { Avatar } from '@/components/ui/Avatar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useSwimmers } from '@/hooks/useSwimmers'
-import { useFeedback, useCreateFeedback } from '@/hooks/useFeedback'
+import { useFeedback, useCreateFeedback, useDeleteFeedback, useToggleFeedbackPin } from '@/hooks/useFeedback'
 import { swimmerName } from '@/types'
 
 export function FeedbackPage() {
   const { data: swimmers } = useSwimmers()
   const { data: feedback } = useFeedback()
   const createFeedback = useCreateFeedback()
+  const deleteFeedback = useDeleteFeedback()
+  const togglePin = useToggleFeedbackPin()
 
   const [swimmerId, setSwimmerId] = useState('')
   const [content, setContent] = useState('')
@@ -75,6 +77,22 @@ export function FeedbackPage() {
                   <span className="text-sm font-medium text-text-primary">{nameById.get(f.swimmer_id) ?? 'Swimmer'}</span>
                   {f.is_pinned && <Pin className="h-3 w-3 text-accent" />}
                   <span className="ml-auto font-mono text-xs tabular-nums text-text-muted">{new Date(f.created_at).toLocaleDateString()}</span>
+                  <button
+                    onClick={() => togglePin.mutate({ id: f.id, is_pinned: !f.is_pinned })}
+                    className="rounded p-1 text-text-muted hover:text-accent"
+                    title={f.is_pinned ? 'Unpin' : 'Pin'}
+                  >
+                    <Pin className={`h-3.5 w-3.5 ${f.is_pinned ? 'fill-current' : ''}`} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Delete this feedback?')) deleteFeedback.mutate(f.id)
+                    }}
+                    className="rounded p-1 text-text-muted hover:text-danger"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
                 <p className="text-sm text-text-primary">{f.content}</p>
               </li>
