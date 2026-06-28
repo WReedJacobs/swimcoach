@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Timer, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Card, CardHeader } from '@/components/ui/Card'
@@ -6,18 +6,47 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { BeginnerTip } from '@/components/ui/BeginnerTip'
 import { formatTime, parseTime } from '@/lib/formatTime'
 import { STROKES, DISTANCES } from '@/types'
 import { useBeginnerLogs } from './beginnerStore'
+import { useJourneyStore } from '@/store/beginnerJourneyStore'
+
+function isoWeek(dateStr: string): string {
+  const d = new Date(dateStr)
+  const jan1 = new Date(d.getFullYear(), 0, 1)
+  const week = Math.ceil(((d.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7)
+  return `${d.getFullYear()}-W${week}`
+}
 
 export function SelfLogPage() {
   const [logs, setLogs] = useBeginnerLogs()
+  const { markStep } = useJourneyStore()
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [stroke, setStroke] = useState<string>('freestyle')
   const [distance, setDistance] = useState(25)
   const [raw, setRaw] = useState('')
 
   const valid = parseTime(raw) != null
+
+  // Auto-mark journey steps based on log data
+  useEffect(() => {
+    if (!logs.length) return
+    // first_log
+    markStep('first_log')
+    // timed_swim — all logs have timeSeconds (field always present)
+    markStep('timed_swim')
+    // one_km
+    const totalM = logs.reduce((s, l) => s + l.distance, 0)
+    if (totalM >= 1000) markStep('one_km')
+    // three_swims in one week
+    const weekCounts = new Map<string, number>()
+    for (const l of logs) {
+      const w = isoWeek(l.date)
+      weekCounts.set(w, (weekCounts.get(w) ?? 0) + 1)
+    }
+    if ([...weekCounts.values()].some((c) => c >= 3)) markStep('three_swims')
+  }, [logs, markStep])
 
   const add = () => {
     const seconds = parseTime(raw)
@@ -33,6 +62,10 @@ export function SelfLogPage() {
 
   return (
     <div className="space-y-8">
+    <BeginnerTip
+      stepId="first_log"
+      tip="Log anything — even a 200m casual swim counts. The habit of recording is what matters."
+    />
     <SectionHeader kicker="Log" />
     <div className="grid gap-6 lg:grid-cols-2">
       <Card>

@@ -3,8 +3,10 @@ import { CheckCircle2, Circle } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Badge } from '@/components/ui/Badge'
+import { BeginnerTip } from '@/components/ui/BeginnerTip'
 import { cn } from '@/lib/cn'
 import { fitnessProgram } from './content'
+import { useJourneyStore } from '@/store/beginnerJourneyStore'
 
 const STORAGE_KEY = 'sc_fitness_done'
 
@@ -29,16 +31,20 @@ const effortBorderClass: Record<string, string> = {
 
 export function FitnessProgramPage() {
   const [done, setDone] = useState<Set<string>>(() => loadDone())
+  const { markStep } = useJourneyStore()
 
   const toggle = useCallback((key: string) => {
     setDone((prev) => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
-      else next.add(key)
+      else {
+        next.add(key)
+        markStep('complete_workout')
+      }
       saveDone(next)
       return next
     })
-  }, [])
+  }, [markStep])
 
   const totalSessions = fitnessProgram.reduce((acc, w) => acc + w.sessions.length, 0)
   const completedCount = fitnessProgram.reduce(
@@ -49,6 +55,10 @@ export function FitnessProgramPage() {
 
   return (
     <div className="space-y-8">
+      <BeginnerTip
+        stepId="complete_workout"
+        tip="Pick any session from Week 1 and follow it at the pool. Come back and mark it done."
+      />
       <Card className="border-coral/20 bg-coral/5">
         <h2 className="text-xl font-semibold text-text-primary">4-week fitness program</h2>
         <p className="mt-1 text-sm text-text-secondary">

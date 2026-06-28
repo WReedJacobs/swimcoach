@@ -12,15 +12,15 @@ import {
   Medal,
   IdCard,
   ClipboardList,
-  BookOpen,
   Library,
   GraduationCap,
-  Search,
   Flag,
   Gauge,
   MapPin,
   NotebookPen,
   Settings,
+  Map,
+  UserCheck,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -66,15 +66,16 @@ const swimmerNav: NavItem[] = [
 ]
 
 const beginnerNav: NavItem[] = [
-  { label: 'Home', to: '/beginner', icon: Waves },
+  { label: 'My Journey', mobileLabel: 'Journey', to: '/beginner/journey', icon: Map },
+  { label: 'Log a Swim', mobileLabel: 'Log', to: '/beginner/log', icon: Timer },
+  { label: 'My Progress', mobileLabel: 'Progress', to: '/beginner', icon: Waves },
+  { label: 'Milestones', to: '/beginner/milestones', icon: Flag },
   { label: 'Pool Guide', mobileLabel: 'Pool', to: '/beginner/pool-guide', icon: MapPin },
   { label: 'Training Basics', mobileLabel: 'Training', to: '/beginner/training', icon: Gauge },
-  { label: 'Stroke Guides', mobileLabel: 'Strokes', to: '/beginner/strokes', icon: BookOpen },
-  { label: 'Log a Swim', mobileLabel: 'Log', to: '/beginner/log', icon: Timer },
-  { label: '4-Week Program', mobileLabel: 'Program', to: '/beginner/program', icon: GraduationCap },
-  { label: 'Glossary', to: '/beginner/glossary', icon: Search },
-  { label: 'Milestones', to: '/beginner/milestones', icon: Flag },
-  { label: 'Find a Coach', mobileLabel: 'Find Coach', to: '/beginner/find-coach', icon: Users },
+  { label: 'Fitness Program', mobileLabel: 'Program', to: '/beginner/program', icon: GraduationCap },
+  { label: 'Drill Library', mobileLabel: 'Drills', to: '/beginner/drills', icon: Library },
+  { label: 'Going Solo', mobileLabel: 'Solo', to: '/beginner/self-guided', icon: UserCheck },
+  { label: 'Find a Coach', mobileLabel: 'Coach', to: '/beginner/find-coach', icon: Users },
   { label: 'Settings', to: '/beginner/settings', icon: Settings },
 ]
 

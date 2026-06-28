@@ -48,6 +48,8 @@ import { FindCoachPage } from '@/features/beginner/FindCoachPage'
 import { PoolGuidePage } from '@/features/beginner/PoolGuidePage'
 import { TrainingBasicsPage } from '@/features/beginner/TrainingBasicsPage'
 import { FitnessProgramPage } from '@/features/beginner/FitnessProgramPage'
+import { JourneyPage } from '@/features/beginner/JourneyPage'
+import { SelfGuidedPage } from '@/features/beginner/SelfGuidedPage'
 
 // Admin
 import { AdminShell } from '@/features/admin/AdminShell'
@@ -146,6 +148,9 @@ export default function App() {
         <Route path="/beginner/program" element={<FitnessProgramPage />} />
         <Route path="/beginner/find-coach" element={<FindCoachPage />} />
         <Route path="/beginner/settings" element={<SettingsPage />} />
+        <Route path="/beginner/journey" element={<JourneyPage />} />
+        <Route path="/beginner/self-guided" element={<SelfGuidedPage />} />
+        <Route path="/beginner/drills" element={<DrillLibraryPage />} />
       </Route>
 
       {/* Admin */}

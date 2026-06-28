@@ -11,6 +11,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size
   loading?: boolean
   leftIcon?: ReactNode
+  rightIcon?: ReactNode
   /** Beginner mode tints primary buttons coral. */
   accent?: 'default' | 'coral'
 }
@@ -28,6 +29,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       size = 'md',
       loading = false,
       leftIcon,
+      rightIcon,
       accent = 'default',
       className,
       children,
@@ -68,6 +70,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           leftIcon
         )}
         {children}
+        {!loading && rightIcon}
       </button>
     )
   },

@@ -4,23 +4,30 @@ import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { cn } from '@/lib/cn'
 import { MILESTONES, useMilestones, useBeginnerLogs } from './beginnerStore'
+import { useJourneyStore } from '@/store/beginnerJourneyStore'
 
 export function MilestonesPage() {
   const [milestones, setMilestones] = useMilestones()
   const [logs] = useBeginnerLogs()
+  const { markStep } = useJourneyStore()
 
   // Auto-achieve distance milestones when the user has logged a swim of that distance or more
   useEffect(() => {
     const maxLogged = logs.reduce((max, l) => Math.max(max, l.distance), 0)
+    let anyAchieved = false
     setMilestones((prev) =>
       prev.map((m) => {
         if (!m.achievedAt && m.distance <= maxLogged) {
+          anyAchieved = true
           return { ...m, achievedAt: new Date().toISOString() }
         }
         return m
       }),
     )
-  }, [logs, setMilestones])
+    if (anyAchieved || milestones.some((m) => m.achievedAt)) {
+      markStep('first_milestone')
+    }
+  }, [logs, setMilestones, markStep, milestones])
 
   const toggle = (distance: number) => {
     setMilestones((prev) =>

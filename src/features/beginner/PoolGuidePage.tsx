@@ -3,6 +3,7 @@ import { ChevronDown, Clock } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Badge } from '@/components/ui/Badge'
+import { BeginnerTip } from '@/components/ui/BeginnerTip'
 import { cn } from '@/lib/cn'
 import { laneEtiquette, equipment } from './content'
 
@@ -11,6 +12,11 @@ export function PoolGuidePage() {
 
   return (
     <div className="space-y-8">
+      <BeginnerTip
+        stepId="read_pool_guide"
+        tip="Read through this page — understanding lane etiquette will make your first session much less intimidating."
+        autoMark
+      />
       <Card className="border-coral/20 bg-coral/5">
         <h2 className="text-xl font-semibold text-text-primary">Your pool survival guide</h2>
         <p className="mt-1 text-sm text-text-secondary">

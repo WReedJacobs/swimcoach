@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
+import { BeginnerTip } from '@/components/ui/BeginnerTip'
 import { cn } from '@/lib/cn'
 import { effortLevels, trainingFacts } from './content'
 
@@ -17,7 +18,11 @@ export function TrainingBasicsPage() {
 
   return (
     <div className="space-y-8">
-
+      <BeginnerTip
+        stepId="read_training_basics"
+        tip="Coaches use specific notation for sessions. This page explains what it all means."
+        autoMark
+      />
       {/* Effort levels */}
       <div>
         <SectionHeader kicker="Effort levels" />
