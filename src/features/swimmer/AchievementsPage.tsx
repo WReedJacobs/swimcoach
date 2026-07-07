@@ -10,6 +10,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useMySwimmer } from '@/hooks/useMySwimmer'
 import { useTimes } from '@/hooks/useTimes'
+import { isoWeekKey } from '@/lib/isoWeek'
 import type { SwimTime, Stroke } from '@/types'
 
 // ─── Achievement definitions ──────────────────────────────────────────────────
@@ -39,11 +40,7 @@ function maxSessionsInWeek(times: SwimTime[]): number {
   if (!times.length) return 0
   const counts = new Map<string, number>()
   for (const t of times) {
-    const d = new Date(t.recorded_at)
-    const yr = d.getFullYear()
-    const jan1 = new Date(yr, 0, 1)
-    const wk = Math.ceil(((d.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7)
-    const key = `${yr}-W${wk}`
+    const key = isoWeekKey(new Date(t.recorded_at))
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
   return Math.max(0, ...[...counts.values()])

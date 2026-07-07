@@ -19,47 +19,55 @@ export interface RawActivity {
   improvementCount: number
   daysActive: number
   hasCoach: boolean
-  messagesSent: number
+  messagesSent: number       // kept for type compat; not used in COM formula
   goalsSet: number
   feedbackReceived: number
+  lastSwimDate: string | null  // ISO date; used for CON decay
 }
 
 export function calculateStats(a: RawActivity) {
-  // SPD — speed
+  // SPD — speed; improvementCount*5 added, strokeVariety removed
   const spdScore =
     a.pbCount * 4 +
     (a.cssResult ? Math.max(0, 200 - a.cssResult) * 0.5 : 0) +
-    a.strokeVariety * 6
+    a.improvementCount * 5
   const spd = Math.max(15, curve(spdScore, 0.016))
 
-  // END — endurance
+  // END — endurance (unchanged)
   const endScore =
     a.totalDistanceKm * 2.5 + a.distanceMilestones * 12 + a.weeksWithSessions * 3
   const end_stat = Math.max(15, curve(endScore, 0.014))
 
-  // TEC — technique
+  // TEC — technique; structuredSessionsDone removed
   const tecScore =
     a.drillsViewed * 3 +
     a.strokeVariety * 8 +
-    a.structuredSessionsDone * 4 +
     a.feedbackReceived * 5
   const tec = Math.max(10, curve(tecScore, 0.015))
 
-  // CON — consistency
+  // CON — consistency with inactive-week decay (-2 per week beyond 14 days, floor 20)
   const conScore =
     a.currentStreak * 2 + a.longestStreak * 1.5 + a.weeksWithSessions * 4
-  const con = Math.max(20, curve(conScore, 0.017))
+  let con = Math.max(20, curve(conScore, 0.017))
+  if (a.lastSwimDate) {
+    const inactiveDays = Math.floor(
+      (Date.now() - new Date(a.lastSwimDate).getTime()) / 86_400_000,
+    )
+    if (inactiveDays > 14) {
+      con = Math.max(20, con - Math.floor((inactiveDays - 14) / 7) * 2)
+    }
+  }
 
-  // PRG — progress
-  const prgScore = a.goalsAchieved * 10 + a.improvementCount * 7 + a.pbCount * 2
+  // PRG — progress; goalsAchieved weight raised, improvementCount removed
+  const prgScore = a.goalsAchieved * 12 + a.pbCount * 3
   const prg = Math.max(10, curve(prgScore, 0.013))
 
-  // COM — commitment
+  // COM — commitment; structuredSessionsDone*3 added, messagesSent removed
   const comScore =
     a.daysActive * 1.5 +
     (a.hasCoach ? 20 : 0) +
-    a.messagesSent * 1 +
-    a.goalsSet * 4
+    a.goalsSet * 4 +
+    a.structuredSessionsDone * 3
   const com = Math.max(20, curve(comScore, 0.016))
 
   // OVR — weighted composite
