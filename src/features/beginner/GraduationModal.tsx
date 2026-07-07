@@ -4,6 +4,8 @@ import { CheckCircle2, Waves } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/hooks/useAuth'
 import { useJourneyStore } from '@/store/beginnerJourneyStore'
+import { supabase } from '@/lib/supabase'
+import { useMilestones, MILESTONES } from './beginnerStore'
 
 const SWIMMER_PERKS = [
   'Full time tracking and PB detection',
@@ -18,6 +20,7 @@ export function GraduationModal({ open }: { open: boolean }) {
   const { setGraduationSeen } = useJourneyStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [milestones] = useMilestones()
 
   if (!open) return null
 
@@ -25,6 +28,29 @@ export function GraduationModal({ open }: { open: boolean }) {
     setLoading(true)
     try {
       if (user) {
+        // Sync any achieved beginner milestones to the DB before the role change
+        // so recalc_swimmer_stats can read them on the first post-graduation recalc.
+        const achieved = milestones
+          .map((state, i) =>
+            state.achievedAt
+              ? { label: MILESTONES[i].label, distance: MILESTONES[i].distance, achievedAt: state.achievedAt }
+              : null,
+          )
+          .filter((m): m is { label: string; distance: number; achievedAt: string } => m !== null)
+
+        if (achieved.length > 0) {
+          await supabase.from('milestones').upsert(
+            achieved.map((m) => ({
+              profile_id: user.id,
+              label: m.label,
+              distance: m.distance,
+              achieved: true,
+              achieved_at: m.achievedAt,
+            })),
+            { onConflict: 'profile_id,label' },
+          )
+        }
+
         await setRole('swimmer', 'beginner')
         navigate('/swimmer')
       } else {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Gauge, Save, Info } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
@@ -36,6 +36,20 @@ export function CssTestPage() {
     `swimcoach:css:${swimmer?.id ?? 'me'}`,
     null,
   )
+
+  // When swimmer row first becomes available, migrate anonymous trial data
+  // from the 'me' fallback key into the id-scoped key so data survives login.
+  useEffect(() => {
+    if (!swimmer?.id) return
+    const meKey = 'swimcoach:css:me'
+    const meRaw = localStorage.getItem(meKey)
+    if (!meRaw) return
+    const idKey = `swimcoach:css:${swimmer.id}`
+    if (!localStorage.getItem(idKey)) {
+      localStorage.setItem(idKey, meRaw)
+    }
+    localStorage.removeItem(meKey)
+  }, [swimmer?.id])
 
   const [long, setLong] = useState('')
   const [short, setShort] = useState('')

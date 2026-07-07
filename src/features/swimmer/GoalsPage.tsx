@@ -9,6 +9,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
 import { useMySwimmer } from '@/hooks/useMySwimmer'
+import { useEnsureMySwimmerRow } from '@/hooks/useEnsureMySwimmerRow'
 import { useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal } from '@/hooks/useGoals'
 import { useTimes } from '@/hooks/useTimes'
 import { fastestByEvent } from '@/lib/pbDetector'
@@ -19,6 +20,7 @@ import type { Goal, Stroke } from '@/types'
 type ModalMode = 'create' | 'edit'
 
 export function GoalsPage() {
+  useEnsureMySwimmerRow()
   const { data: swimmer } = useMySwimmer()
   const { data: goals, isLoading } = useGoals(swimmer?.id)
   const { data: times } = useTimes(swimmer?.id)
@@ -89,9 +91,14 @@ export function GoalsPage() {
         <SectionHeader
           kicker="Goals"
           action={
-            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={openCreate} disabled={!swimmer}>
-              New goal
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button leftIcon={<Plus className="h-4 w-4" />} onClick={openCreate} disabled={!swimmer}>
+                New goal
+              </Button>
+              {!swimmer && (
+                <span className="font-mono text-xs text-text-muted">Setting up profile…</span>
+              )}
+            </div>
           }
         />
 

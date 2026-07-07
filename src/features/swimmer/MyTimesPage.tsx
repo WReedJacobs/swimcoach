@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
 import { useMySwimmer } from '@/hooks/useMySwimmer'
+import { useEnsureMySwimmerRow } from '@/hooks/useEnsureMySwimmerRow'
 import { useTimes, useSplits, useLogTime, useDeleteTime } from '@/hooks/useTimes'
 import { formatTime, formatStopwatch, parseTime } from '@/lib/formatTime'
 import { timesToCsv, downloadCsv, parseCsvTimes } from '@/lib/csvUtils'
@@ -98,6 +99,7 @@ function TimeRow({
 }
 
 export function MyTimesPage() {
+  useEnsureMySwimmerRow()
   const { data: swimmer } = useMySwimmer()
   const { data: times } = useTimes(swimmer?.id)
   const logTime = useLogTime()
@@ -239,6 +241,9 @@ export function MyTimesPage() {
             <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setOpen(true)} disabled={!swimmer}>
               Log a time
             </Button>
+            {!swimmer && (
+              <span className="font-mono text-xs text-text-muted">Setting up profile…</span>
+            )}
           </div>
         }
       />
