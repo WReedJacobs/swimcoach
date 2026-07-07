@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Save, BookOpen, Gauge, Repeat2 } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -55,6 +56,7 @@ export function SessionBuilder() {
   const isEditing = Boolean(sessionId)
   const { user } = useAuth()
 
+  const qc = useQueryClient()
   const createSession = useCreateSession()
   const updateSession = useUpdateSession()
   const { data: swimmers } = useSwimmers()
@@ -75,6 +77,7 @@ export function SessionBuilder() {
   const [recurrence, setRecurrence] = useState<Recurrence>('none')
   const [recurrenceEnd, setRecurrenceEnd] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const [paceOpen, setPaceOpen] = useState(false)
   const [cssPace, setCssPace] = useState('1:30')
@@ -149,10 +152,59 @@ export function SessionBuilder() {
 
   const save = async () => {
     if (!title.trim()) return
+    setSaveError(null)
 
-    if (isEditing && sessionId) {
-      await updateSession.mutateAsync({
-        id: sessionId,
+    try {
+      if (isEditing && sessionId) {
+        await updateSession.mutateAsync({
+          id: sessionId,
+          title,
+          date,
+          type,
+          warm_up: warmUp,
+          main_set: mainSet,
+          cool_down: coolDown,
+          notes,
+          swimmerIds: assigned,
+        })
+        navigate('/coach/sessions')
+        return
+      }
+
+      // Recurring: bulk-insert all sessions in a single call
+      if (recurrence !== 'none' && recurrenceEnd && previewDates && previewDates.length > 0) {
+        setIsSaving(true)
+        try {
+          const rows = previewDates.map((d) => ({
+            coach_id: user!.id,
+            title,
+            date: d,
+            type,
+            recurrence,
+            recurrence_end: recurrenceEnd,
+            warm_up: warmUp || null,
+            main_set: mainSet || null,
+            cool_down: coolDown || null,
+            notes: notes || null,
+          }))
+          const { data, error } = await supabase.from('sessions').insert(rows).select('id')
+          if (error) throw error
+          if (assigned.length > 0 && data) {
+            const assignmentRows = (data as { id: string }[]).flatMap((s) =>
+              assigned.map((swimmer_id) => ({ session_id: s.id, swimmer_id }))
+            )
+            const { error: assignErr } = await supabase.from('session_assignments').insert(assignmentRows)
+            if (assignErr) throw assignErr
+          }
+          qc.invalidateQueries({ queryKey: ['sessions', user!.id] })
+        } finally {
+          setIsSaving(false)
+        }
+        navigate('/coach/sessions')
+        return
+      }
+
+      await createSession.mutateAsync({
         title,
         date,
         type,
@@ -163,52 +215,9 @@ export function SessionBuilder() {
         swimmerIds: assigned,
       })
       navigate('/coach/sessions')
-      return
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save. Please try again.')
     }
-
-    // Recurring: bulk-insert all sessions in a single call
-    if (recurrence !== 'none' && recurrenceEnd && previewDates && previewDates.length > 0) {
-      setIsSaving(true)
-      try {
-        const rows = previewDates.map((d) => ({
-          coach_id: user!.id,
-          title,
-          date: d,
-          type,
-          recurrence,
-          recurrence_end: recurrenceEnd,
-          warm_up: warmUp || null,
-          main_set: mainSet || null,
-          cool_down: coolDown || null,
-          notes: notes || null,
-        }))
-        const { data, error } = await supabase.from('sessions').insert(rows).select('id')
-        if (error) throw error
-        if (assigned.length > 0 && data) {
-          const assignmentRows = (data as { id: string }[]).flatMap((s) =>
-            assigned.map((swimmer_id) => ({ session_id: s.id, swimmer_id }))
-          )
-          const { error: assignErr } = await supabase.from('session_assignments').insert(assignmentRows)
-          if (assignErr) throw assignErr
-        }
-      } finally {
-        setIsSaving(false)
-      }
-      navigate('/coach/sessions')
-      return
-    }
-
-    await createSession.mutateAsync({
-      title,
-      date,
-      type,
-      warm_up: warmUp,
-      main_set: mainSet,
-      cool_down: coolDown,
-      notes,
-      swimmerIds: assigned,
-    })
-    navigate('/coach/sessions')
   }
 
   const isPending = createSession.isPending || updateSession.isPending || isSaving
@@ -335,6 +344,12 @@ export function SessionBuilder() {
                 session{previewDates.length === 1 ? '' : 's'}
               </span>
             </div>
+          )}
+
+          {saveError && (
+            <p className="rounded-component border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+              {saveError}
+            </p>
           )}
 
           <Button className="w-full" size="lg" leftIcon={<Save className="h-5 w-5" />} loading={isPending} disabled={!title.trim()} onClick={save}>

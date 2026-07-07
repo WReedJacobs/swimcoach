@@ -8,12 +8,14 @@ import { Textarea, Select } from '@/components/ui/Input'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge, LevelBadge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { SwimmerCard } from '@/components/ui/SwimmerCard'
 import { TimesChart } from '@/components/charts/TimesChart'
 import { useSwimmer } from '@/hooks/useSwimmers'
 import { useTimes, useDeleteTime } from '@/hooks/useTimes'
 import { useGoals, useDeleteGoal } from '@/hooks/useGoals'
 import { useFeedback, useCreateFeedback, useDeleteFeedback, useToggleFeedbackPin } from '@/hooks/useFeedback'
 import { useCssResultForSwimmer } from '@/hooks/useCssResults'
+import { useSwimmerStatsByUserId } from '@/hooks/useSwimmerStats'
 import { formatTime } from '@/lib/formatTime'
 import { STROKES, swimmerName } from '@/types'
 import type { Stroke, SwimTime, Goal, Feedback } from '@/types'
@@ -21,6 +23,7 @@ import type { Stroke, SwimTime, Goal, Feedback } from '@/types'
 export function SwimmerProfilePage() {
   const { swimmerId } = useParams()
   const { data: swimmer } = useSwimmer(swimmerId)
+  const { data: swimmerStats } = useSwimmerStatsByUserId(swimmer?.profile_id)
   const { data: times } = useTimes(swimmerId)
   const { data: goals } = useGoals(swimmerId)
   const { data: feedback } = useFeedback(swimmerId)
@@ -80,6 +83,24 @@ export function SwimmerProfilePage() {
           </Link>
         </div>
       </Card>
+
+      {swimmerStats && (
+        <div className="flex items-start gap-4">
+          <SwimmerCard
+            stats={swimmerStats}
+            name={swimmerName(swimmer)}
+            avatarUrl={swimmer.profile?.avatar_url ?? undefined}
+            size="md"
+          />
+          <div className="flex flex-col gap-1 pt-1 text-sm">
+            <p className="text-text-secondary">
+              OVR{' '}
+              <span className="font-mono font-bold text-text-primary">{swimmerStats.ovr}</span>
+            </p>
+            <p className="text-xs capitalize text-text-muted">Tier: {swimmerStats.tier}</p>
+          </div>
+        </div>
+      )}
 
       <div>
         <SectionHeader kicker="Progress" />

@@ -4,6 +4,7 @@ import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { SwimmerCard } from '@/components/ui/SwimmerCard'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/hooks/useAuth'
 import {
@@ -127,6 +128,35 @@ function LeaderRow({
   )
 }
 
+// ─── Podium (top 3 as cards) ───────────────────────────────────────────────
+
+function Podium({ entries }: { entries: LeaderboardEntry[] }) {
+  if (entries.length < 1) return null
+  // Show top 3 in a row: 2nd | 1st | 3rd if ≥3 entries, otherwise just in order
+  const top = entries.slice(0, Math.min(3, entries.length))
+  const ordered = top.length === 3 ? [top[1], top[0], top[2]] : top
+  const heights = top.length === 3 ? ['self-end', 'self-start', 'self-end'] : ['self-start']
+  return (
+    <div className="mb-6 flex items-end justify-center gap-4 pt-2">
+      {ordered.map((e, i) => {
+        const realRank = top.indexOf(e) + 1
+        const displayName = e.profile?.display_handle || e.profile?.full_name || '?'
+        return (
+          <div key={e.user_id} className={`flex flex-col items-center gap-2 ${heights[i] ?? ''}`}>
+            <RankBadge rank={realRank} />
+            <SwimmerCard
+              stats={e}
+              name={displayName}
+              avatarUrl={e.profile?.avatar_url}
+              size="md"
+            />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Board sub-component ───────────────────────────────────────────────────
 
 function Board({
@@ -134,11 +164,13 @@ function Board({
   sortKey,
   myId,
   emptyMessage,
+  showPodium = false,
 }: {
   entries: LeaderboardEntry[]
   sortKey: string
   myId?: string
   emptyMessage?: string
+  showPodium?: boolean
 }) {
   const mostImprovedId = entries.reduce<{ id: string; gain: number } | null>((best, e) => {
     const gain = e.ovr - e.prev_ovr
@@ -154,19 +186,27 @@ function Board({
     )
   }
 
+  const podiumEntries = showPodium && sortKey === 'ovr' ? entries.slice(0, 3) : []
+  const rowEntries = podiumEntries.length > 0 ? entries.slice(3) : entries
+
   return (
-    <ul className="space-y-1">
-      {entries.map((e, i) => (
-        <LeaderRow
-          key={e.user_id}
-          entry={e}
-          rank={i + 1}
-          sortKey={sortKey}
-          myId={myId}
-          mostImprovedId={mostImprovedId}
-        />
-      ))}
-    </ul>
+    <>
+      {podiumEntries.length > 0 && <Podium entries={podiumEntries} />}
+      {rowEntries.length > 0 && (
+        <ul className="space-y-1">
+          {rowEntries.map((e, i) => (
+            <LeaderRow
+              key={e.user_id}
+              entry={e}
+              rank={(podiumEntries.length > 0 ? 3 : 0) + i + 1}
+              sortKey={sortKey}
+              myId={myId}
+              mostImprovedId={mostImprovedId}
+            />
+          ))}
+        </ul>
+      )}
+    </>
   )
 }
 
@@ -218,7 +258,7 @@ export function LeaderboardPage() {
             title="Global ranking"
             subtitle="Top 20 public profiles by OVR"
           />
-          <Board entries={global} sortKey="ovr" myId={user?.id} emptyMessage="No public profiles yet — enable Public in your profile settings" />
+          <Board entries={global} sortKey="ovr" myId={user?.id} showPodium emptyMessage="No public profiles yet — enable Public in your profile settings" />
         </Card>
       )}
 

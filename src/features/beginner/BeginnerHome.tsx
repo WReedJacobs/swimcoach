@@ -24,6 +24,9 @@ const PLACEHOLDER_STATS: SwimmerStatsRow = {
   prg: 15,
   com: 25,
   tier: 'rookie',
+  main_stroke: null,
+  signature_event: null,
+  signature_time_seconds: null,
   last_calculated: new Date().toISOString(),
   created_at: new Date().toISOString(),
 }

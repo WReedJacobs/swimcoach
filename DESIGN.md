@@ -104,6 +104,20 @@ The feature pages share the marketing hero's visual language via these pieces:
 - **Global cursor glow** — `components/CursorFxLayer.tsx` (mounted once in `App.tsx`) renders the
   halo + lead dot on every page; reduced-motion-gated. Don't add per-page cursor layers.
 
+## Fixed-art components
+
+Some components are intentionally exempt from the no-hardcode-color rule because
+they are **self-contained visual art** that must look identical across all themes.
+
+| Component | File | Reason |
+|---|---|---|
+| `SwimmerCard` | `src/components/ui/SwimmerCard.tsx` | FIFA-style card with per-tier gradient backgrounds and colors. Theming would destroy the art. The file contains all palette values; changes to colors stay inside that file. |
+
+Rules for fixed-art components:
+- All palette values live in the component file itself. Do not import tokens.
+- Document the exception in this section when adding a new fixed-art component.
+- Fixed-art colors do not need to honor the light/dark toggle.
+
 ## Adding a new screen — checklist
 
 - [ ] Compose from `components/ui/*`; don't restyle primitives inline.

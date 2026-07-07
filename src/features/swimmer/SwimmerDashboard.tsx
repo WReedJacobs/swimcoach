@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { SessionBlocks } from '@/components/SessionBlocks'
 import { TimesChart } from '@/components/charts/TimesChart'
 import { SwimmerCard } from '@/components/ui/SwimmerCard'
+import { TierUpModal } from '@/components/ui/TierUpModal'
 import { useMySwimmer, useAssignedSessions } from '@/hooks/useMySwimmer'
 import { useTimes } from '@/hooks/useTimes'
 import { useFeedback } from '@/hooks/useFeedback'
@@ -17,6 +18,7 @@ import { useJoinCoach } from '@/hooks/useJoinCode'
 import { useAuth } from '@/hooks/useAuth'
 import { useOnboardingDraft } from '@/features/onboarding/onboardingStore'
 import { useMyStats, useRecalculateStats } from '@/hooks/useSwimmerStats'
+import { TIER_THRESHOLDS } from '@/lib/statsEngine'
 import { fastestByEvent } from '@/lib/pbDetector'
 import { localDateStr } from '@/lib/dateLocal'
 import { cn } from '@/lib/cn'
@@ -111,7 +113,7 @@ function JoinCoachCard() {
 }
 
 export function SwimmerDashboard() {
-  const { profile } = useAuth()
+  const { user, profile } = useAuth()
   const { data: swimmer } = useMySwimmer()
   const { data: stats } = useMyStats()
   const recalculate = useRecalculateStats()
@@ -240,49 +242,80 @@ export function SwimmerDashboard() {
         </Card>
       </div>
 
-      {stats && (
-        <div>
-          <SectionHeader
-            kicker="My Rating"
-            action={
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
-                  loading={recalculate.isPending}
-                  onClick={() => recalculate.mutate()}
-                >
-                  Update
-                </Button>
-                <Link to="/swimmer/profile">
-                  <Button variant="ghost" size="sm" leftIcon={<IdCard className="h-3.5 w-3.5" />}>
-                    Full profile
-                  </Button>
-                </Link>
-              </div>
-            }
+      {stats && user && (
+        <>
+          <TierUpModal
+            userId={user.id}
+            stats={stats}
+            name={profile?.full_name ?? 'Me'}
+            avatarUrl={profile?.avatar_url}
+            club={profile?.club_name}
           />
-          <div className="flex items-start gap-4">
-            <SwimmerCard
-              stats={stats}
-              name={profile?.full_name ?? 'Me'}
-              avatarUrl={profile?.avatar_url}
-              size="md"
+          <div>
+            <SectionHeader
+              kicker="My Rating"
+              action={
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
+                    loading={recalculate.isPending}
+                    onClick={() => recalculate.mutate()}
+                  >
+                    Update
+                  </Button>
+                  <Link to="/swimmer/profile">
+                    <Button variant="ghost" size="sm" leftIcon={<IdCard className="h-3.5 w-3.5" />}>
+                      Full profile
+                    </Button>
+                  </Link>
+                </div>
+              }
             />
-            <div className="hidden sm:flex flex-col gap-1.5 pt-1">
-              <p className="text-sm text-text-secondary">
-                OVR <span className="font-mono font-bold text-text-primary">{stats.ovr}</span>
-                {stats.ovr > stats.prev_ovr && (
-                  <span className="ml-2 font-mono text-xs text-secondary">
-                    +{stats.ovr - stats.prev_ovr} this week
-                  </span>
-                )}
-              </p>
-              <p className="text-xs text-text-muted capitalize">Tier: {stats.tier}</p>
+            <div className="flex items-start gap-4">
+              <SwimmerCard
+                stats={stats}
+                name={profile?.full_name ?? 'Me'}
+                avatarUrl={profile?.avatar_url}
+                club={profile?.club_name}
+                size="md"
+              />
+              <div className="hidden sm:flex flex-col gap-2 pt-1 flex-1">
+                <p className="text-sm text-text-secondary">
+                  OVR <span className="font-mono font-bold text-text-primary">{stats.ovr}</span>
+                  {stats.ovr > stats.prev_ovr && (
+                    <span className="ml-2 font-mono text-xs text-secondary">
+                      +{stats.ovr - stats.prev_ovr} this week
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-text-muted capitalize">Tier: {stats.tier}</p>
+                {/* Progress to next tier */}
+                {(() => {
+                  const next = TIER_THRESHOLDS.find((t) => t.ovr > stats.ovr)
+                  if (!next) return null
+                  const prev = TIER_THRESHOLDS.slice().reverse().find((t) => t.ovr <= stats.ovr)
+                  const from = prev?.ovr ?? 0
+                  const pct = Math.min(99, ((stats.ovr - from) / (next.ovr - from)) * 100)
+                  return (
+                    <div className="space-y-1">
+                      <p className="text-xs text-text-muted">
+                        {next.ovr - stats.ovr} OVR to <span className="capitalize">{next.label}</span>
+                      </p>
+                      <div className="h-1.5 rounded-full bg-border overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       <div>

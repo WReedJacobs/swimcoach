@@ -5,6 +5,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { SwimmerCard } from '@/components/ui/SwimmerCard'
+import { TierUpModal } from '@/components/ui/TierUpModal'
 import { useAuth } from '@/hooks/useAuth'
 import {
   useMyStats,
@@ -89,6 +90,15 @@ export function ProfilePage() {
 
   return (
     <div className="space-y-8">
+      {user && (
+        <TierUpModal
+          userId={user.id}
+          stats={stats}
+          name={profile?.full_name ?? 'Me'}
+          avatarUrl={profile?.avatar_url}
+          club={profile?.club_name}
+        />
+      )}
       <SectionHeader
         kicker="My Profile"
         action={
@@ -131,6 +141,7 @@ export function ProfilePage() {
             stats={stats}
             name={profile?.full_name ?? 'Me'}
             avatarUrl={profile?.avatar_url}
+            club={profile?.club_name}
             size="lg"
           />
         </div>
@@ -162,21 +173,43 @@ export function ProfilePage() {
             </p>
           </Card>
 
-          {/* Next milestone */}
-          {nextTier && lowestStat && (
+          {/* Progress to next tier */}
+          {nextTier && (
             <Card className="border-accent/20 bg-accent/5">
               <CardHeader
                 title={`${nextTier.gap} OVR to ${nextTier.label}`}
-                subtitle={`Focus on ${STAT_LABELS[lowestStat.key]} (${lowestStat.val}) — your lowest attribute`}
+                subtitle={lowestStat ? `Focus on ${STAT_LABELS[lowestStat.key]} (${lowestStat.val}) — your lowest attribute` : undefined}
               />
-              <ul className="mt-3 space-y-1.5">
-                {(STAT_TIPS[lowestStat.key] ?? []).slice(0, 3).map((tip) => (
-                  <li key={tip} className="flex items-center gap-2 text-sm text-text-secondary">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                    {tip}
-                  </li>
-                ))}
-              </ul>
+              {/* Progress bar */}
+              {(() => {
+                const prevTier = TIER_THRESHOLDS.slice().reverse().find((t) => t.ovr <= stats.ovr)
+                const from = prevTier?.ovr ?? 0
+                const pct = Math.min(99, ((stats.ovr - from) / (nextTier.ovr - from)) * 100)
+                return (
+                  <div className="mt-3 space-y-1">
+                    <div className="flex justify-between font-mono text-[10px] text-text-muted">
+                      <span>{stats.ovr} OVR</span>
+                      <span>{nextTier.label} at {nextTier.ovr}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-border overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-accent transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })()}
+              {lowestStat && (
+                <ul className="mt-3 space-y-1.5">
+                  {(STAT_TIPS[lowestStat.key] ?? []).slice(0, 3).map((tip) => (
+                    <li key={tip} className="flex items-center gap-2 text-sm text-text-secondary">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
           )}
         </div>

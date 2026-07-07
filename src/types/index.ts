@@ -44,6 +44,7 @@ export interface Profile {
   is_admin: boolean
   created_at: string
   display_handle: string | null
+  club_name: string | null
 }
 
 export interface Swimmer {

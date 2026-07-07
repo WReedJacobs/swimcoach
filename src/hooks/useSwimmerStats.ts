@@ -17,6 +17,9 @@ export interface SwimmerStatsRow {
   prg: number
   com: number
   tier: string
+  main_stroke: string | null
+  signature_event: string | null
+  signature_time_seconds: number | null
   last_calculated: string
   created_at: string
 }
@@ -58,6 +61,22 @@ export function useRecalculateStats() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-stats'] })
       qc.invalidateQueries({ queryKey: ['leaderboard'] })
+    },
+  })
+}
+
+export function useSwimmerStatsByUserId(userId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['swimmer-stats', userId],
+    enabled: Boolean(userId),
+    queryFn: async (): Promise<SwimmerStatsRow | null> => {
+      const { data, error } = await supabase
+        .from('swimmer_stats')
+        .select('*')
+        .eq('user_id', userId!)
+        .maybeSingle()
+      if (error) throw error
+      return data as SwimmerStatsRow | null
     },
   })
 }
