@@ -52,6 +52,7 @@ export interface LogTimeInput {
   course?: Course
   notes?: string
   session_id?: string | null
+  drill_id?: string | null
   is_self_logged?: boolean
   laps?: number[]
 }
@@ -140,6 +141,7 @@ export function useLogTime() {
           swimmer_id: input.swimmer_id,
           coach_id: input.is_self_logged ? null : user?.id ?? null,
           session_id: input.session_id ?? null,
+          drill_id: input.drill_id ?? null,
           stroke: input.stroke,
           distance: input.distance,
           course,

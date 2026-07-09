@@ -15,8 +15,9 @@ import { useSwimmers } from '@/hooks/useSwimmers'
 import { useSessions } from '@/hooks/useSessions'
 import { useLogTime } from '@/hooks/useTimes'
 import { useCssResultForSwimmer } from '@/hooks/useCssResults'
+import { useDrills } from '@/hooks/useDrills'
 import { STROKES, DISTANCES, COURSES, COURSE_LABELS, swimmerName } from '@/types'
-import type { Stroke, Course, Swimmer } from '@/types'
+import type { Stroke, Course, Swimmer, Drill } from '@/types'
 
 type Mode = 'stopwatch' | 'bulk'
 
@@ -46,9 +47,34 @@ function SessionPicker({
   )
 }
 
+/** Drill selector filtered to the current stroke (or all if no stroke match). */
+function DrillPicker({
+  drills,
+  stroke,
+  value,
+  onChange,
+}: {
+  drills: Drill[]
+  stroke: Stroke
+  value: string
+  onChange: (id: string) => void
+}) {
+  const relevant = drills.filter((d) => d.stroke == null || d.stroke === stroke)
+  const list = relevant.length > 0 ? relevant : drills
+  return (
+    <Select label="Drill (optional)" value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">No drill</option>
+      {list.map((d) => (
+        <option key={d.id} value={d.id}>{d.title}</option>
+      ))}
+    </Select>
+  )
+}
+
 export function TimeLogger() {
   const { data: swimmers, isLoading } = useSwimmers()
   const { data: sessions } = useSessions()
+  const { data: drills = [] } = useDrills()
   const [mode, setMode] = useState<Mode>('stopwatch')
 
   return (
@@ -80,9 +106,9 @@ export function TimeLogger() {
           description="Times are always attached to a swimmer, stroke and distance."
         />
       ) : mode === 'stopwatch' ? (
-        <StopwatchMode swimmers={swimmers} sessions={sessions ?? []} />
+        <StopwatchMode swimmers={swimmers} sessions={sessions ?? []} drills={drills} />
       ) : (
-        <BulkMode swimmers={swimmers} sessions={sessions ?? []} />
+        <BulkMode swimmers={swimmers} sessions={sessions ?? []} drills={drills} />
       )}
     </div>
   )
@@ -104,9 +130,11 @@ function SwimmerCssBadge({ swimmerId }: { swimmerId: string }) {
 function StopwatchMode({
   swimmers,
   sessions,
+  drills,
 }: {
   swimmers: Swimmer[]
   sessions: { id: string; title: string; date: string }[]
+  drills: Drill[]
 }) {
   const logTime = useLogTime()
   const today = localDateStr()
@@ -118,6 +146,7 @@ function StopwatchMode({
   const [distance, setDistance] = useState<number>(100)
   const [course, setCourse] = useState<Course>('SCM')
   const [sessionId, setSessionId] = useState<string>(todaySessionId)
+  const [drillId, setDrillId] = useState<string>('')
 
   const [pending, setPending] = useState<number | null>(null)
   const [manual, setManual] = useState('')
@@ -145,6 +174,7 @@ function StopwatchMode({
       course,
       time_seconds: pending,
       session_id: sessionId || null,
+      drill_id: drillId || null,
       notes,
     })
     setResult({ seconds: pending, isPb: res.isPb })
@@ -203,6 +233,10 @@ function StopwatchMode({
               <option key={c} value={c}>{c} — {COURSE_LABELS[c]}</option>
             ))}
           </Select>
+
+          {drills.length > 0 && (
+            <DrillPicker drills={drills} stroke={stroke} value={drillId} onChange={setDrillId} />
+          )}
 
           <SessionPicker sessions={sessions} value={sessionId} onChange={setSessionId} />
         </div>
@@ -312,19 +346,22 @@ interface BulkRow {
   stroke: Stroke
   distance: number
   course: Course
+  drillId: string
   raw: string
 }
 
 function emptyRow(swimmerId: string): BulkRow {
-  return { swimmerId, stroke: 'freestyle', distance: 100, course: 'SCM', raw: '' }
+  return { swimmerId, stroke: 'freestyle', distance: 100, course: 'SCM', drillId: '', raw: '' }
 }
 
 function BulkMode({
   swimmers,
   sessions,
+  drills,
 }: {
   swimmers: Swimmer[]
   sessions: { id: string; title: string; date: string }[]
+  drills: Drill[]
 }) {
   const logTime = useLogTime()
   const today = localDateStr()
@@ -357,6 +394,7 @@ function BulkMode({
         course: r.course,
         time_seconds: seconds,
         session_id: sessionId || null,
+        drill_id: r.drillId || null,
       })
       count++
     }
@@ -417,6 +455,9 @@ function BulkMode({
                   <option key={d} value={d}>{d}m</option>
                 ))}
               </Select>
+              {drills.length > 0 && (
+                <DrillPicker drills={drills} stroke={r.stroke} value={r.drillId} onChange={(id) => update(i, { drillId: id })} />
+              )}
               <Input
                 placeholder="1:02.45"
                 value={r.raw}
@@ -437,6 +478,7 @@ function BulkMode({
               <th className="py-2 pr-3">Stroke</th>
               <th className="py-2 pr-3">Distance</th>
               <th className="py-2 pr-3">Course</th>
+              {drills.length > 0 && <th className="py-2 pr-3">Drill</th>}
               <th className="py-2 pr-3">Time</th>
             </tr>
           </thead>
@@ -473,6 +515,11 @@ function BulkMode({
                       ))}
                     </Select>
                   </td>
+                  {drills.length > 0 && (
+                    <td className="py-2 pr-3">
+                      <DrillPicker drills={drills} stroke={r.stroke} value={r.drillId} onChange={(id) => update(i, { drillId: id })} />
+                    </td>
+                  )}
                   <td className="py-2 pr-3">
                     <Input
                       placeholder="1:02.45"

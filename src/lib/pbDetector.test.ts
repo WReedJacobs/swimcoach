@@ -8,6 +8,7 @@ function makeTime(overrides: Partial<SwimTime>): SwimTime {
     swimmer_id: 'sw-1',
     coach_id: null,
     session_id: null,
+    drill_id: null,
     stroke: 'freestyle',
     distance: 100,
     course: 'SCM',

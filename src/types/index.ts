@@ -96,6 +96,7 @@ export interface SwimTime {
   swimmer_id: string
   coach_id: string | null
   session_id: string | null
+  drill_id: string | null
   stroke: Stroke
   distance: number
   course: Course
