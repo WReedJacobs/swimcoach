@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { RefreshCw, Globe, Lock } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
@@ -38,14 +38,28 @@ export function ProfilePage() {
   const recalculate = useRecalculateStats()
   const setPublic = useSetPublic()
 
-  const ovrHistory = useMemo<Array<{ ovr: number; date: string }>>(() => {
+  // Nothing else ever wrote to this key, so the "OVR history" card below
+  // never had data to show. Seed from whatever's already stored, then
+  // append on every fresh calculation (deduped by last_calculated, capped
+  // at 10 — this is a local trend view, not synced across devices).
+  const [ovrHistory, setOvrHistory] = useState<Array<{ ovr: number; date: string }>>(() => {
     if (!user) return []
     try {
       return JSON.parse(localStorage.getItem(`swimphoria:ovr_history:${user.id}`) ?? '[]')
     } catch {
       return []
     }
-  }, [user])
+  })
+
+  useEffect(() => {
+    if (!user || !stats) return
+    setOvrHistory((prev) => {
+      if (prev[prev.length - 1]?.date === stats.last_calculated) return prev
+      const next = [...prev, { ovr: stats.ovr, date: stats.last_calculated }].slice(-10)
+      localStorage.setItem(`swimphoria:ovr_history:${user.id}`, JSON.stringify(next))
+      return next
+    })
+  }, [user, stats])
 
   const maxOvr = useMemo(() => Math.max(...ovrHistory.map((h) => h.ovr), 40), [ovrHistory])
 
