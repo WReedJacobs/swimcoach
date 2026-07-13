@@ -1,7 +1,8 @@
 import { forwardRef } from 'react'
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, MouseEvent, ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { multiRipple, splash } from '@/hooks/useWaterClick'
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
 type Size = 'sm' | 'md' | 'lg'
@@ -14,6 +15,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   rightIcon?: ReactNode
   /** Beginner mode tints primary buttons coral. */
   accent?: 'default' | 'coral'
+  /**
+   * WATER-EFFECTS-DESIGN.md section 4 — click feedback. 'ripple' (default)
+   * is the app-wide baseline for ordinary actions; 'splash' is for
+   * beginner-mode logging/goal actions specifically; 'none' opts out
+   * (e.g. destructive actions, or a button that navigates away instantly).
+   */
+  waterEffect?: 'ripple' | 'splash' | 'none'
 }
 
 const sizes: Record<Size, string> = {
@@ -31,14 +39,21 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       leftIcon,
       rightIcon,
       accent = 'default',
+      waterEffect = 'ripple',
       className,
       children,
       disabled,
+      onClick,
       ...props
     },
     ref,
   ) => {
     const coral = accent === 'coral'
+    const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
+      if (waterEffect === 'ripple') multiRipple(e.currentTarget, e)
+      else if (waterEffect === 'splash') splash(e.currentTarget, e)
+      onClick?.(e)
+    }
     const variants: Record<Variant, string> = {
       // Aqua is too light for white text — use the dark on-primary ink,
       // and let the accent glow lift the primary action off the canvas.
@@ -55,8 +70,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || loading}
+        onClick={handleClick}
         className={cn(
-          'inline-flex items-center justify-center gap-2 rounded-component font-medium transition-colors',
+          'relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-component font-medium transition-colors',
           'focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50',
           sizes[size],
           variants[variant],
