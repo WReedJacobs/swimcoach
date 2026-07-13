@@ -19,3 +19,5 @@ Supabase dashboard's migration history.
 | 009_swimmer_ratings.sql | Swimmer OVR rating system |
 | 010_swimmer_plans.sql | Swimmer training plans |
 | 011_seed_drills.sql | Seed 45 global drills + add `focus` column + `advanced` level |
+| … | _(table not kept current past 011 — see filenames in this directory)_ |
+| 021_google_oauth_avatar.sql | Copy Google profile photo into `profiles.avatar_url` on signup/login |

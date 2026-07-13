@@ -11,6 +11,7 @@ export function useAuth() {
   const initialized = useAuthStore((s) => s.initialized)
   const signIn = useAuthStore((s) => s.signIn)
   const signUp = useAuthStore((s) => s.signUp)
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle)
   const signOut = useAuthStore((s) => s.signOut)
   const setRole = useAuthStore((s) => s.setRole)
   const refreshProfile = useAuthStore((s) => s.refreshProfile)
@@ -26,6 +27,7 @@ export function useAuth() {
     initialized,
     signIn,
     signUp,
+    signInWithGoogle,
     signOut,
     setRole,
     refreshProfile,

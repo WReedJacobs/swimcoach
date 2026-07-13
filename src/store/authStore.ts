@@ -12,6 +12,7 @@ interface AuthState {
   init: () => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, fullName: string) => Promise<{ needsConfirmation: boolean }>
+  signInWithGoogle: () => Promise<void>
   setRole: (role: Role, level?: Profile['level']) => Promise<void>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
@@ -84,6 +85,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } finally {
       set({ loading: false })
     }
+  },
+
+  signInWithGoogle: async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+    if (error) throw error
+    // Browser is now navigating to Google; no local state to set.
   },
 
   setRole: async (role, level) => {

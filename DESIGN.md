@@ -112,6 +112,7 @@ they are **self-contained visual art** that must look identical across all theme
 | Component | File | Reason |
 |---|---|---|
 | `SwimmerCard` | `src/components/ui/SwimmerCard.tsx` | FIFA-style card with per-tier gradient backgrounds and colors. Theming would destroy the art. The file contains all palette values; changes to colors stay inside that file. |
+| `GoogleIcon` | `src/components/ui/GoogleIcon.tsx` | Official Google "G" brand mark — Google's identity guidelines require its exact colors, so it's exempt from the token system like `SwimmerCard`. |
 
 Rules for fixed-art components:
 - All palette values live in the component file itself. Do not import tokens.

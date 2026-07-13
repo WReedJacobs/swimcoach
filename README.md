@@ -32,8 +32,9 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ## Supabase setup
 
 1. Create a project at supabase.com.
-2. Run the migration in the SQL editor: `supabase/migrations/001_initial.sql` (tables, enums, RLS policies, and a trigger that auto-creates a `profiles` row on signup).
+2. Run every migration in `supabase/migrations/` in order via the SQL editor (tables, enums, RLS policies, and a trigger that auto-creates a `profiles` row on signup — see `001_initial.sql` and `017_recovered_baseline.sql`).
 3. To seed demo data (`supabase/seed.sql`): first create the auth users (the coach + 4 swimmers) via the dashboard/admin API, map their UUIDs to the placeholders at the top of the file, then run it. The seed gives you a coach, 4 swimmers across levels, 3 sessions (past/today/future), ~14 times, goals, and 5 built-in drills so charts render immediately.
+4. **Google sign-in (optional):** in the Supabase dashboard go to Authentication → Providers → Google, enable it, and paste in a Google Cloud OAuth Client ID/Secret (create one at [console.cloud.google.com](https://console.cloud.google.com) → APIs & Services → Credentials → OAuth client ID → Web application). Add `https://<project-ref>.supabase.co/auth/v1/callback` as the Google-side authorized redirect URI, and add your app's own URL(s) (e.g. `http://localhost:5173`, your prod domain) under Authentication → URL Configuration → Redirect URLs so `/auth/callback` is allowed. No app-level env vars needed — Supabase handles the OAuth exchange server-side; the app just calls `supabase.auth.signInWithOAuth({ provider: 'google' })` (`GoogleSignInButton` on the login/signup pages).
 
 ## Roles
 

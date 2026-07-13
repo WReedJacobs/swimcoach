@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/hooks/useAuth'
 import { isLocalMode } from '@/lib/supabase'
 import { demoUsers } from '@/lib/local/fixtures'
+import { GoogleSignInButton } from './GoogleSignInButton'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -83,6 +84,8 @@ export function LoginPage() {
           </div>
         </div>
       )}
+
+      <GoogleSignInButton />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input

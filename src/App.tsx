@@ -25,6 +25,7 @@ const SignUpPage          = lazy(() => import('@/features/auth/SignUpPage').then
 const RoleSelectPage      = lazy(() => import('@/features/auth/RoleSelectPage').then(m => ({ default: m.RoleSelectPage })))
 const ForgotPasswordPage  = lazy(() => import('@/features/auth/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })))
 const ResetPasswordPage   = lazy(() => import('@/features/auth/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })))
+const AuthCallbackPage    = lazy(() => import('@/features/auth/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })))
 
 // Coach
 const CoachDashboard   = lazy(() => import('@/features/coach/CoachDashboard').then(m => ({ default: m.CoachDashboard })))
@@ -103,6 +104,7 @@ export default function App() {
         <Route path="/role-select" element={<RoleSelectPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
         {/* Coach */}
         <Route

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/hooks/useAuth'
 import { Mail } from 'lucide-react'
+import { GoogleSignInButton } from './GoogleSignInButton'
 
 const schema = z.object({
   fullName: z.string().min(2, 'Enter your name'),
@@ -78,6 +79,8 @@ export function SignUpPage() {
         </>
       }
     >
+      <GoogleSignInButton />
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
           label="Full name"
