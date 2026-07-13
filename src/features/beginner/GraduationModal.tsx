@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/hooks/useAuth'
 import { useJourneyStore } from '@/store/beginnerJourneyStore'
 import { supabase } from '@/lib/supabase'
-import { useMilestones, MILESTONES } from './beginnerStore'
+import { useMilestones, useBeginnerLogs, MILESTONES } from './beginnerStore'
 
 const SWIMMER_PERKS = [
   'Full time tracking and PB detection',
@@ -16,11 +16,12 @@ const SWIMMER_PERKS = [
 ]
 
 export function GraduationModal({ open }: { open: boolean }) {
-  const { user, setRole } = useAuth()
+  const { user, profile, setRole } = useAuth()
   const { setGraduationSeen } = useJourneyStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [milestones] = useMilestones()
+  const [logs, setLogs] = useBeginnerLogs()
 
   if (!open) return null
 
@@ -49,6 +50,48 @@ export function GraduationModal({ open }: { open: boolean }) {
             })),
             { onConflict: 'profile_id,label' },
           )
+        }
+
+        // Sync locally-logged swims into `times` before the role change so
+        // they're not silently stranded in localStorage (see README "Notes /
+        // next steps"). Needs a swimmers row first — self-managed, same shape
+        // useEnsureMySwimmerRow creates elsewhere, just resolved synchronously
+        // here so we have the id to attach the synced times to.
+        if (logs.length > 0) {
+          const { data: existing } = await supabase
+            .from('swimmers')
+            .select('id')
+            .eq('profile_id', user.id)
+            .maybeSingle()
+
+          const swimmerId =
+            existing?.id ??
+            (
+              await supabase
+                .from('swimmers')
+                .insert({
+                  coach_id: user.id,
+                  profile_id: user.id,
+                  display_name: profile?.full_name || 'Swimmer',
+                  level: 'beginner',
+                })
+                .select('id')
+                .single()
+            ).data?.id
+
+          if (swimmerId) {
+            await supabase.from('times').insert(
+              logs.map((l) => ({
+                swimmer_id: swimmerId,
+                stroke: l.stroke,
+                distance: l.distance,
+                time_seconds: l.timeSeconds,
+                is_self_logged: true,
+                recorded_at: new Date(l.date).toISOString(),
+              })),
+            )
+            setLogs([])
+          }
         }
 
         await setRole('swimmer', 'beginner')
