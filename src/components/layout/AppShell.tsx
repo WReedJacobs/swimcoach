@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { MobileNav } from './MobileNav'
 import { navForRole } from './nav'
+import { OceanBackground } from '@/components/OceanBackground'
 import { useMySwimmer } from '@/hooks/useMySwimmer'
 import { useSwimmerRealtime } from '@/hooks/useSwimmerRealtime'
 import { useOfflineSync } from '@/hooks/useOfflineSync'
@@ -34,7 +35,8 @@ function OfflineSyncLayer() {
 export function AppShell({ role }: { role: Role | null }) {
   const { pathname } = useLocation()
   return (
-    <div className="flex h-screen overflow-hidden bg-bg">
+    <div className="flex h-screen overflow-hidden">
+      <OceanBackground />
       {role === 'swimmer' && <SwimmerRealtimeLayer />}
       <OfflineSyncLayer />
       <Sidebar role={role} />

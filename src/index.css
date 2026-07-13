@@ -129,6 +129,82 @@
   }
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Water effects (WATER-EFFECTS-DESIGN.md) — OceanBackground layers,
+   Card spotlight, and the three useWaterClick variants. Kept as plain
+   CSS classes rather than Tailwind arbitrary values: the gradients/vars
+   involved don't escape cleanly into Tailwind's bracket syntax, and this
+   matches how .mythic-card-wrapper/.skeleton/.shadow-glow already work
+   above. All durations are set per-instance via inline `animation` on
+   the JS-created nodes, not baked into these keyframes, so a handful of
+   shared keyframes cover every variant.
+   ───────────────────────────────────────────────────────────── */
+
+/* Ambient background blobs (OceanBackground layer 2) — translate + scale
+   wander, ±5%, duration varies per-blob via inline animation-duration. */
+@keyframes oceanBlobDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(4%, -3%) scale(1.05); }
+}
+
+/* Shared by: ambient background ripples (~5s), multi-ripple click (~1.1s),
+   and splash's 2 rings (~0.7s) — only animation-duration differs. */
+@keyframes waterRipple {
+  from { transform: scale(0); opacity: var(--ripple-opacity, 0.9); }
+  to { transform: scale(1); opacity: 0; }
+}
+
+/* Splash droplets — --px/--py (scatter) and --fx/--fy (fall) are set
+   per-droplet inline by useWaterClick for randomized angle/distance. */
+@keyframes splashDroplet {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  35% { transform: translate(var(--px), var(--py)) scale(0.8); opacity: 1; }
+  100% { transform: translate(var(--fx), var(--fy)) scale(0.3); opacity: 0; }
+}
+
+/* Shoreline wave — foam wash in, hold, recede. Not a straight sweep. */
+@keyframes shorelineWave {
+  0% { transform: translateY(100%); opacity: 0; }
+  8% { opacity: 1; }
+  35% { transform: translateY(16%); }
+  60% { transform: translateY(20%); }
+  90% { transform: translateY(20%); opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+/* Layer-3 caustic noise texture — screen in dark, multiply in light so it
+   reads as light-on-dark vs. light-on-light in each theme. */
+.ocean-noise {
+  mix-blend-mode: screen;
+}
+.light .ocean-noise {
+  mix-blend-mode: multiply;
+}
+
+/* Card spotlight (section 3) — radial glow following the cursor, applied
+   to every interactive Card. --mx/--my written directly via
+   style.setProperty on mousemove, never setState. */
+.card-spotlight {
+  position: relative;
+}
+.card-spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+  background: radial-gradient(
+    220px circle at var(--mx, 50%) var(--my, 50%),
+    rgb(var(--c-primary) / 0.16),
+    transparent 70%
+  );
+}
+.card-spotlight:hover::before {
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
