@@ -286,6 +286,6 @@ BEGIN
     '0 20 * * 0',
     'SELECT public.recalc_all_swimmer_stats(true)'
   );
-EXCEPTION WHEN undefined_schema OR undefined_function THEN
+EXCEPTION WHEN invalid_schema_name OR undefined_function THEN
   RAISE NOTICE 'pg_cron not available — enable it in the Supabase dashboard to activate weekly ratings.';
 END $$;

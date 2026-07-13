@@ -25,3 +25,9 @@ CREATE POLICY "Swimmers manage own plans" ON public.swimmer_plans
 -- Admins can see all plans
 CREATE POLICY "Admins view plans" ON public.swimmer_plans
   FOR SELECT USING (public.is_admin());
+
+-- ─── swim_level: add 'advanced' ──────────────────────────────────────────────
+-- Lives here (committed in its own transaction) rather than in
+-- 011_seed_drills.sql, which needs to INSERT rows using this value — Postgres
+-- disallows using a new enum value in the same transaction that adds it.
+ALTER TYPE swim_level ADD VALUE IF NOT EXISTS 'advanced';

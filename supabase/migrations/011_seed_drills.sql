@@ -1,5 +1,7 @@
--- Add 'advanced' to the swim_level enum (safe to re-run)
-ALTER TYPE swim_level ADD VALUE IF NOT EXISTS 'advanced';
+-- 'advanced' was added to the swim_level enum at the end of 010_swimmer_plans.sql —
+-- has to land in an earlier, separately-committed transaction because Postgres
+-- forbids using a brand-new enum value in the same transaction that adds it,
+-- and this file's own INSERT below needs it.
 
 -- Add focus column for technique cue
 ALTER TABLE drills ADD COLUMN IF NOT EXISTS focus text;
@@ -241,4 +243,4 @@ INSERT INTO drills (title, stroke, level, description_plain, description_technic
  'Pacing discipline drill. Forces conservative first half. Second split should be 1-3 seconds faster in training conditions.',
  'Pacing and race control')
 
-ON CONFLICT (title) DO NOTHING;
+ON CONFLICT (title) WHERE coach_id IS NULL DO NOTHING;

@@ -1,15 +1,21 @@
 -- ─── Admin RLS policies ────────────────────────────────────────────────────
 
+-- Defined here (not just in 009, which also (re)defines it identically) so
+-- this migration doesn't depend on one that runs after it. SECURITY DEFINER
+-- means the internal SELECT runs as the function owner and bypasses RLS —
+-- required for the profiles policy below: a plain correlated subquery on
+-- profiles from within a policy ON profiles re-triggers that same policy
+-- and Postgres errors with "infinite recursion detected in policy".
+create or replace function public.is_admin()
+returns boolean language sql security definer stable as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and is_admin = true);
+$$;
+
 -- profiles: admins can read and update any row
 drop policy if exists "admin full access to profiles" on public.profiles;
 create policy "admin full access to profiles"
   on public.profiles for all
-  using (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid() and p.is_admin = true
-    )
-  );
+  using (public.is_admin());
 
 -- sessions: admins can read any session
 drop policy if exists "admin read all sessions" on public.sessions;
