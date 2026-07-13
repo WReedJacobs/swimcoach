@@ -72,7 +72,9 @@ export function TopBar({ title }: { title: string }) {
       ? '/coach/settings'
       : profile?.role === 'swimmer'
         ? '/swimmer/settings'
-        : null
+        : profile?.role === 'beginner'
+          ? '/beginner/settings'
+          : null
 
   useEffect(() => {
     if (!panelOpen) return

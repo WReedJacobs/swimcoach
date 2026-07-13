@@ -9,7 +9,7 @@ const sections = [
     icon: Gauge,
     title: 'Set your own pace',
     body: 'Use the CSS test to find your critical swim speed — the training pace where you build fitness fastest. The test takes 20 minutes in the pool and gives you a personalised T-pace you can use for every session.',
-    cta: { label: 'Take the CSS test', href: '/beginner/training' },
+    cta: { label: 'Take the CSS test', href: '/beginner/learn/css-test' },
   },
   {
     icon: GraduationCap,

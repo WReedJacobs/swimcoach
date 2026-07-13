@@ -181,6 +181,7 @@ export default function App() {
           <Route path="/beginner/learn/drills" element={<DrillLibraryPage />} />
           <Route path="/beginner/learn/confidence-faq" element={<ConfidenceFaqPage />} />
           <Route path="/beginner/learn/safety" element={<SafetyPage />} />
+          <Route path="/beginner/learn/css-test" element={<CssTestPage />} />
 
           {/* Legacy redirects — keep old bookmarks working */}
           <Route path="/beginner/pool-guide" element={<Navigate to="/beginner/learn/pool-guide" replace />} />
