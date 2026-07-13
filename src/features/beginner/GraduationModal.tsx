@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/hooks/useAuth'
 import { useJourneyStore } from '@/store/beginnerJourneyStore'
 import { supabase } from '@/lib/supabase'
+import { shoreWave } from '@/hooks/useWaterClick'
 import { useMilestones, useBeginnerLogs, MILESTONES } from './beginnerStore'
 
 const SWIMMER_PERKS = [
@@ -146,7 +147,13 @@ export function GraduationModal({ open, onClose }: { open: boolean; onClose?: ()
 
         {/* Actions */}
         <div className="flex flex-col gap-3">
-          <Button className="w-full" size="lg" loading={loading} onClick={handleGraduate}>
+          <Button
+            className="w-full"
+            size="lg"
+            loading={loading}
+            waterEffect="none"
+            onClick={(e) => { shoreWave(e.currentTarget); handleGraduate() }}
+          >
             {user ? 'Become a Swimmer' : 'Create Swimmer Account'}
           </Button>
           <div className="rounded-card border border-border bg-bg p-4 text-center">

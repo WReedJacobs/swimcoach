@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   CheckCircle2,
@@ -23,6 +23,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { ProgressBar, ProgressRing } from '@/components/ui/ProgressBar'
 import { Button } from '@/components/ui/Button'
 import { GraduationModal } from './GraduationModal'
+import { shoreWave } from '@/hooks/useWaterClick'
 import { useBeginnerLogs, useBeginnerGoal } from './beginnerStore'
 import { useJourneyStore } from '@/store/beginnerJourneyStore'
 import { JOURNEY_STAGES, ALL_STEP_IDS, type JourneyStep } from './journeySteps'
@@ -137,6 +138,21 @@ export function JourneyPage() {
   const overallPct = Math.round((doneCount / totalSteps) * 100)
   const allDone = isAllComplete()
   const graduationOpen = (allDone && !graduationPromptSeen) || forceOpen
+
+  // Shoreline wave (rare, celebratory) on each stage's false→true completion
+  // transition — not on every render while a stage is already done.
+  const stageRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const wasStageDone = useRef<Record<string, boolean>>({})
+  useEffect(() => {
+    for (const stage of JOURNEY_STAGES) {
+      const done = isStageComplete(stage.id)
+      if (done && !wasStageDone.current[stage.id]) {
+        const el = stageRefs.current[stage.id]
+        if (el) shoreWave(el)
+      }
+      wasStageDone.current[stage.id] = done
+    }
+  }, [completedSteps, isStageComplete])
 
   const distanceThisWeek = useMemo(() => {
     const weekStart = new Date()
@@ -254,7 +270,11 @@ export function JourneyPage() {
         const currentStepId = isActive ? currentStepInStage(stage.id) : null
 
         return (
-          <div key={stage.id} className="space-y-3">
+          <div
+            key={stage.id}
+            ref={(el) => { stageRefs.current[stage.id] = el }}
+            className="relative space-y-3"
+          >
             <div className="flex items-center gap-3">
               <div
                 className={cn(

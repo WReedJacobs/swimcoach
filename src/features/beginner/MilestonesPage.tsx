@@ -3,6 +3,7 @@ import { CheckCircle2, Circle } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { cn } from '@/lib/cn'
+import { splash } from '@/hooks/useWaterClick'
 import { MILESTONES, useMilestones, useBeginnerLogs } from './beginnerStore'
 import { useJourneyStore } from '@/store/beginnerJourneyStore'
 
@@ -11,23 +12,31 @@ export function MilestonesPage() {
   const [logs] = useBeginnerLogs()
   const { markStep } = useJourneyStore()
 
-  // Auto-achieve distance milestones when the user has logged a swim of that distance or more
+  // Auto-achieve distance milestones when the user has logged a swim of that
+  // distance or more. Bails out returning the same array reference when
+  // nothing changed — depending on `milestones` itself while unconditionally
+  // calling setMilestones() every run was an infinite render loop (each
+  // setMilestones produced a new array via .map(), which re-triggered this
+  // same effect via the milestones dependency, forever).
   useEffect(() => {
     const maxLogged = logs.reduce((max, l) => Math.max(max, l.distance), 0)
-    let anyAchieved = false
-    setMilestones((prev) =>
-      prev.map((m) => {
+    setMilestones((prev) => {
+      let changed = false
+      const next = prev.map((m) => {
         if (!m.achievedAt && m.distance <= maxLogged) {
-          anyAchieved = true
+          changed = true
           return { ...m, achievedAt: new Date().toISOString() }
         }
         return m
-      }),
-    )
-    if (anyAchieved || milestones.some((m) => m.achievedAt)) {
-      markStep('first_milestone')
-    }
-  }, [logs, setMilestones, markStep, milestones])
+      })
+      return changed ? next : prev
+    })
+  }, [logs, setMilestones])
+
+  const hasAnyAchieved = milestones.some((m) => m.achievedAt)
+  useEffect(() => {
+    if (hasAnyAchieved) markStep('first_milestone')
+  }, [hasAnyAchieved, markStep])
 
   const toggle = (distance: number) => {
     setMilestones((prev) =>
@@ -61,9 +70,9 @@ export function MilestonesPage() {
           return (
             <li key={m.distance}>
               <button
-                onClick={() => toggle(m.distance)}
+                onClick={(e) => { splash(e.currentTarget, e); toggle(m.distance) }}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-card border p-4 text-left transition-colors',
+                  'relative overflow-hidden flex w-full items-center gap-3 rounded-card border p-4 text-left transition-colors',
                   done ? 'border-coral/40 bg-coral/5' : 'border-border hover:bg-bg',
                 )}
               >

@@ -129,7 +129,7 @@ export function SelfLogPage() {
             error={raw.length > 0 && parseTime(raw) == null ? 'Try a format like 25:30 or 18:04.5' : undefined}
           />
 
-          <Button accent="coral" className="w-full" disabled={!valid} onClick={add}>
+          <Button accent="coral" className="w-full" disabled={!valid} waterEffect="splash" onClick={add}>
             Save swim
           </Button>
         </div>

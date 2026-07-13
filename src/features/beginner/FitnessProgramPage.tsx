@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { CheckCircle2, Circle, ArrowRight, Library, ChevronDown, ChevronRight as ChevronRightIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge'
 import { BeginnerTip } from '@/components/ui/BeginnerTip'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
+import { splash, shoreWave } from '@/hooks/useWaterClick'
 import { fitnessProgram } from './content'
 import { useJourneyStore } from '@/store/beginnerJourneyStore'
 import { BEGINNER_PRESETS } from '@/lib/presetCatalog'
@@ -140,6 +141,18 @@ export function FitnessProgramPage() {
       acc + w.sessions.filter((s) => done.has(`w${w.week}-${s.title}`)).length,
     0,
   )
+  const programDone = completedCount === totalSessions
+
+  // Shoreline wave (rare, celebratory only) on the false→true transition of
+  // finishing the whole programme — not every render while already done.
+  const progressCardRef = useRef<HTMLDivElement>(null)
+  const wasProgramDone = useRef(programDone)
+  useEffect(() => {
+    if (programDone && !wasProgramDone.current && progressCardRef.current) {
+      shoreWave(progressCardRef.current)
+    }
+    wasProgramDone.current = programDone
+  }, [programDone])
 
   return (
     <div className="space-y-8">
@@ -147,7 +160,7 @@ export function FitnessProgramPage() {
         stepId="complete_workout"
         tip="Pick any session from Week 1 and follow it at the pool. Come back and mark it done."
       />
-      <Card className="border-coral/20 bg-coral/5">
+      <Card ref={progressCardRef} className="border-coral/20 bg-coral/5">
         <h2 className="text-xl font-semibold text-text-primary">8-week fitness programme</h2>
         <p className="mt-1 text-sm text-text-secondary">
           Two sessions a week, each with a warm-up, main set, and cool-down. Go at your own pace — it's fine to repeat a week before moving on.
@@ -239,8 +252,8 @@ export function FitnessProgramPage() {
                           {session.title}
                         </h4>
                         <button
-                          onClick={() => toggle(key)}
-                          className="shrink-0"
+                          onClick={(e) => { splash(e.currentTarget, e); toggle(key) }}
+                          className="relative shrink-0 overflow-hidden rounded-full"
                           aria-label={completed ? 'Mark incomplete' : 'Mark complete'}
                         >
                           {completed ? (
