@@ -166,7 +166,7 @@ export function JourneyPage() {
       {/* Persistent nudge once they've seen (and dismissed) the graduation
           prompt at least once — otherwise there's no way back to it short of
           re-completing every step (it only auto-opens once). */}
-      {graduationPromptSeen && !allDone && (
+      {graduationPromptSeen && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-secondary/30 bg-secondary/5 px-4 py-3">
           <p className="text-sm font-medium text-text-primary">
             Ready to level up? You can become a Swimmer any time.
