@@ -45,7 +45,7 @@ export function ProfilePage() {
     } catch {
       return []
     }
-  }, [user, stats])
+  }, [user])
 
   const maxOvr = useMemo(() => Math.max(...ovrHistory.map((h) => h.ovr), 40), [ovrHistory])
 

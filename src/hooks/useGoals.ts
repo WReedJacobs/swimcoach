@@ -62,7 +62,7 @@ export function useUpdateGoal() {
   return useMutation({
     mutationFn: async ({
       id,
-      swimmerId,
+      swimmerId: _swimmerId,
       ...input
     }: { id: string; swimmerId: string } & Partial<GoalInput>) => {
       const { error } = await supabase

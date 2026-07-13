@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Play, Pause, RotateCcw, Flag } from 'lucide-react'
 import { formatStopwatch } from '@/lib/formatTime'
 import { Button } from './Button'
@@ -28,10 +28,10 @@ export function Stopwatch({
   const baseRef = useRef(0)
   const rafRef = useRef<number>()
 
-  const tick = useCallback(() => {
+  function tick() {
     setElapsed(baseRef.current + (performance.now() - startRef.current))
     rafRef.current = requestAnimationFrame(tick)
-  }, [])
+  }
 
   const start = () => {
     if (running) return
