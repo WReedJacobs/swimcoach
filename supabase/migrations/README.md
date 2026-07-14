@@ -25,3 +25,4 @@ Supabase dashboard's migration history.
 | 023_swimmer_invite.sql | `swimmers.invited_at`; `handle_new_user` links an invited swimmer row + sets role on signup |
 | 024_goal_race_training_plan.sql | Goal-race training plan generator, Milestone 1: `goal_races`, `plan_set_targets`, plan linkage on `sessions`, training availability on `swimmers`, `times.rpe`. Not to be confused with `swimmer_plans` (010) — that's unrelated, self-authored solo workouts. |
 | 025_fix_sessions_recursion.sql | Fixes pre-existing infinite-recursion RLS bug between `sessions` and `session_assignments` (querying `sessions` at all failed for any non-owning-coach caller) — surfaced while verifying 024. |
+| 026_plan_generation_runs.sql | Goal-race training plan generator, Milestone 2: audit log for `generate-training-plan` edge function calls. |

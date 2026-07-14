@@ -2,7 +2,10 @@
 // (no DOM/React deps) so the same file works for the Milestone 3 form and
 // the Milestone 2 edge function's structured LLM output validation.
 import { z } from 'zod'
-import { GOAL_EVENT_TYPES, GOAL_PRIORITIES, PLAN_PHASES } from '@/types'
+// Relative import with an explicit /index.ts — also imported directly by
+// the generate-training-plan edge function under Deno, which needs the
+// full path (no directory-index resolution like Vite/tsc do).
+import { GOAL_EVENT_TYPES, GOAL_PRIORITIES, PLAN_PHASES } from '../types/index.ts'
 
 // ─── Goal race form input (Milestone 3) ────────────────────────────────────
 
