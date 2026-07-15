@@ -14,7 +14,8 @@ import { useCreateSession, useUpdateSession, useSession, useSessionAssignments }
 import { useSwimmers } from '@/hooks/useSwimmers'
 import { useDrills } from '@/hooks/useDrills'
 import { useAuth } from '@/hooks/useAuth'
-import { swimmerName, DISTANCES } from '@/types'
+import { useGoalRace } from '@/hooks/useGoalRaces'
+import { swimmerName, DISTANCES, PLAN_PHASE_LABELS } from '@/types'
 import type { SessionType, Recurrence } from '@/types'
 import { formatTime, parseTime } from '@/lib/formatTime'
 import { localDateStr } from '@/lib/dateLocal'
@@ -59,7 +60,7 @@ export function SessionBuilder() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const [searchParams] = useSearchParams()
   const isEditing = Boolean(sessionId)
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
 
   const qc = useQueryClient()
   const createSession = useCreateSession()
@@ -68,6 +69,21 @@ export function SessionBuilder() {
   const { data: drills } = useDrills()
   const { data: existingSession } = useSession(sessionId)
   const { data: existingAssigned } = useSessionAssignments(sessionId)
+  const { data: goalRace } = useGoalRace(existingSession?.goal_race_id ?? undefined)
+
+  // Self-coached swimmers (swimmers.coach_id === their own id) reach this
+  // same component via /swimmer/sessions/*, not /coach/sessions/* — they
+  // have no route for the latter. Send them back to the goal race they
+  // were editing a generated session for, or their dashboard otherwise.
+  // Coaches always go to their sessions list, goal-race-linked or not —
+  // there's no coach-side goal race detail page in this pass, but the
+  // session still shows up in their regular list either way.
+  const homePath =
+    profile?.role === 'swimmer'
+      ? existingSession?.goal_race_id
+        ? `/swimmer/goal-race/${existingSession.goal_race_id}`
+        : '/swimmer'
+      : '/coach/sessions'
 
   const [title, setTitle] = useState('')
   const [date, setDate] = useState(localDateStr())
@@ -211,7 +227,7 @@ export function SessionBuilder() {
           notes,
           swimmerIds: assigned,
         })
-        navigate('/coach/sessions')
+        navigate(homePath)
         return
       }
 
@@ -244,7 +260,7 @@ export function SessionBuilder() {
         } finally {
           setIsSaving(false)
         }
-        navigate('/coach/sessions')
+        navigate(homePath)
         return
       }
 
@@ -258,7 +274,7 @@ export function SessionBuilder() {
         notes,
         swimmerIds: assigned,
       })
-      navigate('/coach/sessions')
+      navigate(homePath)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save. Please try again.')
     }
@@ -269,11 +285,29 @@ export function SessionBuilder() {
   return (
     <div className="space-y-6">
       <button
-        onClick={() => navigate('/coach/sessions')}
+        onClick={() => navigate(homePath)}
         className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary"
       >
         <ArrowLeft className="h-4 w-4" /> Back to sessions
       </button>
+
+      {existingSession?.goal_race_id && (
+        <div className="flex items-center gap-2 rounded-component border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-text-secondary">
+          <span className="font-medium text-text-primary">Part of a training plan</span>
+          {goalRace && <span>— {goalRace.name}</span>}
+          {existingSession.plan_week_number != null && (
+            <span className="font-mono text-xs text-text-muted">Week {existingSession.plan_week_number}</span>
+          )}
+          {existingSession.plan_phase && (
+            <span className="font-mono text-xs uppercase tracking-[0.1em] text-primary">
+              {PLAN_PHASE_LABELS[existingSession.plan_phase]}
+            </span>
+          )}
+          {existingSession.plan_status === 'draft' && (
+            <span className="font-mono text-xs uppercase tracking-[0.1em] text-text-muted">Draft</span>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">

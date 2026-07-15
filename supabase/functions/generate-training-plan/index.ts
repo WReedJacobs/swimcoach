@@ -19,7 +19,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { computeTrainingPlanSkeleton } from '../../../src/lib/trainingPlanPhases.ts'
 import { generatedPlanSchema } from '../../../src/lib/goalRaceSchemas.ts'
-import type { GeneratedPlan, PlanSetInput } from '../../../src/lib/goalRaceSchemas.ts'
+import type { GeneratedPlan, PlanSetInput, PlanWeekInput } from '../../../src/lib/goalRaceSchemas.ts'
 import { formatTime } from '../../../src/lib/formatTime.ts'
 import { addDaysStr, localDateStr } from '../../../src/lib/dateLocal.ts'
 import type { GoalEventType, PlanBlock } from '../../../src/types/index.ts'
@@ -170,8 +170,15 @@ async function callAnthropic(systemPrompt: string): Promise<GeneratedPlan> {
   if (!toolUse) throw new Error('Model did not return a structured tool-use response')
 
   // The tool schema shapes the response; this parse is what actually
-  // enforces it — reject rather than silently coerce malformed output.
-  return generatedPlanSchema.parse(toolUse.input)
+  // enforces it — reject rather than silently coerce malformed output. On
+  // failure, include the raw input so a bad run is diagnosable from
+  // plan_generation_runs.error_message alone, without needing to reproduce it.
+  try {
+    return generatedPlanSchema.parse(toolUse.input)
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err)
+    throw new Error(`${detail}\n---raw tool input---\n${JSON.stringify(toolUse.input).slice(0, 2000)}`)
+  }
 }
 
 /** Sets grouped by block, in set_order, joined into the same line format
@@ -377,8 +384,22 @@ Deno.serve(async (req) => {
 
     let plan: GeneratedPlan
     try {
-      const systemPrompt = buildSystemPrompt(gr, skeleton, weeksToGenerate, cssPacePer100, pbs ?? [], availability)
-      plan = await callAnthropic(systemPrompt)
+      // One Anthropic call per week rather than one call for the whole
+      // batch — a full initial generation asking for every week (e.g. 6
+      // weeks x 4 sessions x full set detail) in a single tool-use response
+      // routinely exceeds max_tokens and comes back truncated (empty {}).
+      // Weeks are independent (each only needs the skeleton/CSS/PBs, not
+      // prior weeks' output), so this is safe to run in parallel.
+      const weekPlans = await Promise.all(
+        weeksToGenerate.map((week) => {
+          const systemPrompt = buildSystemPrompt(gr, skeleton, [week], cssPacePer100, pbs ?? [], availability)
+          return callAnthropic(systemPrompt)
+        }),
+      )
+      const allWeeks: PlanWeekInput[] = weekPlans
+        .flatMap((p) => p.weeks)
+        .sort((a, b) => a.week_number - b.week_number)
+      plan = { weeks: allWeeks }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       await adminClient.from('plan_generation_runs').update({ status: 'error', error_message: message }).eq('id', run.id)

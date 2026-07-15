@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarDays, Target, UserPlus, ArrowRight, Pin, IdCard, RefreshCw } from 'lucide-react'
+import { CalendarDays, Target, UserPlus, ArrowRight, Pin, IdCard, RefreshCw, Flag } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { StatTile } from '@/components/ui/StatTile'
@@ -11,6 +11,8 @@ import { TimesChart } from '@/components/charts/TimesChart'
 import { SwimmerCard } from '@/components/ui/SwimmerCard'
 import { TierUpModal } from '@/components/ui/TierUpModal'
 import { useMySwimmer, useAssignedSessions } from '@/hooks/useMySwimmer'
+import { useGoalRaces } from '@/hooks/useGoalRaces'
+import { GOAL_EVENT_TYPE_LABELS } from '@/types'
 import { useTimes } from '@/hooks/useTimes'
 import { useFeedback } from '@/hooks/useFeedback'
 import { useStreak } from '@/hooks/useStreak'
@@ -120,6 +122,7 @@ export function SwimmerDashboard() {
   const { data: sessions } = useAssignedSessions(swimmer?.id)
   const { data: times } = useTimes(swimmer?.id)
   const { data: feedback } = useFeedback(swimmer?.id)
+  const { data: goalRaces } = useGoalRaces(swimmer?.id)
   const streak = useStreak(swimmer?.id)
   const [onboarding] = useOnboardingDraft()
 
@@ -136,6 +139,19 @@ export function SwimmerDashboard() {
   }, [times])
 
   const pinnedFeedback = useMemo(() => (feedback ?? []).filter((f) => f.is_pinned), [feedback])
+
+  // Date.now() is flagged as impure during render regardless of useMemo
+  // wrapping — a useState lazy initializer is the idiomatic way to seed a
+  // one-time impure read (see GoalRacePage.tsx for the same pattern).
+  const [now] = useState(() => Date.now())
+  const { nextRace, nextRaceDaysOut } = useMemo(() => {
+    const today = localDateStr()
+    const race = (goalRaces ?? [])
+      .filter((r) => r.race_date >= today)
+      .sort((a, b) => a.race_date.localeCompare(b.race_date))[0] ?? null
+    const daysOut = race ? Math.ceil((new Date(`${race.race_date}T00:00:00`).getTime() - now) / 86_400_000) : null
+    return { nextRace: race, nextRaceDaysOut: daysOut }
+  }, [goalRaces, now])
 
   const hasRealCoach =
     profile?.coach_id !== null && profile?.coach_id !== profile?.id
@@ -240,6 +256,42 @@ export function SwimmerDashboard() {
             />
           )}
         </Card>
+      </div>
+
+      <div>
+        <SectionHeader kicker="Goal Race" />
+        {nextRace ? (
+          <Link to={`/swimmer/goal-race/${nextRace.id}`}>
+            <Card interactive>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-text-primary">{nextRace.name}</p>
+                  <p className="text-sm text-text-secondary">
+                    {nextRace.distance_meters}m {GOAL_EVENT_TYPE_LABELS[nextRace.event_type]} ·{' '}
+                    {new Date(`${nextRace.race_date}T00:00:00`).toLocaleDateString()}
+                  </p>
+                </div>
+                <StatTile
+                  label="Weeks to go"
+                  value={nextRaceDaysOut != null ? Math.max(0, Math.ceil(nextRaceDaysOut / 7)) : '—'}
+                  unit="wk"
+                  accent
+                  className="shrink-0"
+                />
+              </div>
+            </Card>
+          </Link>
+        ) : (
+          <Card className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-medium text-text-primary">Training for something specific?</p>
+              <p className="text-sm text-text-secondary">Set a race and get a periodized week-by-week plan built around it.</p>
+            </div>
+            <Link to="/swimmer/goal-race" className="shrink-0">
+              <Button leftIcon={<Flag className="h-4 w-4" />}>Set a race goal</Button>
+            </Link>
+          </Card>
+        )}
       </div>
 
       {stats && user && (

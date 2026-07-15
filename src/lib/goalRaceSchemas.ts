@@ -65,6 +65,13 @@ export const planWeekSchema = z.object({
 export type PlanWeekInput = z.infer<typeof planWeekSchema>
 
 export const generatedPlanSchema = z.object({
-  weeks: z.array(planWeekSchema).min(1),
+  // Tool-use output for a single requested week occasionally comes back
+  // as a bare week object (array wrapper dropped) or as that array/object
+  // double-encoded into a JSON string — tolerate both rather than
+  // rejecting an otherwise-valid plan.
+  weeks: z.preprocess((val) => {
+    if (typeof val === 'string') val = JSON.parse(val)
+    return Array.isArray(val) ? val : [val]
+  }, z.array(planWeekSchema).min(1)),
 })
 export type GeneratedPlan = z.infer<typeof generatedPlanSchema>

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Plus, Users, Search, Timer, Copy, Check, RefreshCw,
-  Pencil, Trash2, ChevronDown, Mail,
+  Pencil, Trash2, ChevronDown, Mail, Flag,
 } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonRows } from '@/components/ui/Skeleton'
 import { Modal } from '@/components/ui/Modal'
 import { AddSwimmerModal } from './AddSwimmerModal'
+import { AssignGoalRaceModal } from './AssignGoalRaceModal'
 import { useSwimmers, useUpdateSwimmer, useDeleteSwimmer, useInviteSwimmer } from '@/hooks/useSwimmers'
 import { useTimes } from '@/hooks/useTimes'
 import { useMyJoinCode } from '@/hooks/useJoinCode'
@@ -252,6 +253,7 @@ export function RosterPage() {
   const deleteSwimmer = useDeleteSwimmer()
   const inviteSwimmer = useInviteSwimmer()
   const [modal, setModal] = useState(false)
+  const [goalRaceModal, setGoalRaceModal] = useState(false)
   const [editSwimmer, setEditSwimmer] = useState<Swimmer | null>(null)
   const [editSquadSwimmer, setEditSquadSwimmer] = useState<Swimmer | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Swimmer | null>(null)
@@ -352,9 +354,14 @@ export function RosterPage() {
             ))}
           </Select>
         </div>
-        <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setModal(true)}>
-          Add swimmer
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" leftIcon={<Flag className="h-4 w-4" />} onClick={() => setGoalRaceModal(true)}>
+            Assign goal race
+          </Button>
+          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setModal(true)}>
+            Add swimmer
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -417,6 +424,7 @@ export function RosterPage() {
       )}
 
       <AddSwimmerModal open={modal} onClose={() => setModal(false)} />
+      <AssignGoalRaceModal open={goalRaceModal} onClose={() => setGoalRaceModal(false)} swimmers={swimmers ?? []} />
       {editSwimmer && <EditSwimmerModal swimmer={editSwimmer} onClose={() => setEditSwimmer(null)} />}
       {editSquadSwimmer && <EditSquadModal swimmer={editSquadSwimmer} onClose={() => setEditSquadSwimmer(null)} />}
 

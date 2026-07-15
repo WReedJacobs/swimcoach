@@ -52,6 +52,8 @@ const SwimmerMessagesPage = lazy(() => import('@/features/swimmer/MessagesPage')
 const SwimmerSchedulePage = lazy(() => import('@/features/swimmer/SwimmerSchedulePage').then(m => ({ default: m.SwimmerSchedulePage })))
 const ProfilePage        = lazy(() => import('@/features/swimmer/ProfilePage').then(m => ({ default: m.ProfilePage })))
 const SwimPlannerPage    = lazy(() => import('@/features/swimmer/SwimPlannerPage').then(m => ({ default: m.SwimPlannerPage })))
+const GoalRacePage       = lazy(() => import('@/features/swimmer/GoalRacePage').then(m => ({ default: m.GoalRacePage })))
+const GoalRaceDetailPage = lazy(() => import('@/features/swimmer/GoalRaceDetailPage').then(m => ({ default: m.GoalRaceDetailPage })))
 
 // Beginner
 const JourneyPage           = lazy(() => import('@/features/beginner/JourneyPage').then(m => ({ default: m.JourneyPage })))
@@ -155,6 +157,14 @@ export default function App() {
           <Route path="/swimmer/profile" element={<ProfilePage />} />
           <Route path="/swimmer/planner" element={<SwimPlannerPage />} />
           <Route path="/swimmer/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/swimmer/goal-race" element={<GoalRacePage />} />
+          <Route path="/swimmer/goal-race/:goalRaceId" element={<GoalRaceDetailPage />} />
+          {/* Reuses the exact same SessionBuilder as /coach/sessions/* — for
+              self-coached swimmers (swimmers.coach_id === their own id),
+              whose generated/authored sessions they own by the same RLS
+              rule coaches do, but who have no /coach/* route access. */}
+          <Route path="/swimmer/sessions/new" element={<SessionBuilder />} />
+          <Route path="/swimmer/sessions/:sessionId/edit" element={<SessionBuilder />} />
         </Route>
 
         {/* Beginner — public, no auth required */}
