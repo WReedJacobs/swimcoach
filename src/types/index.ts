@@ -256,6 +256,19 @@ export interface PlanSetTarget {
   created_at: string
 }
 
+/**
+ * Milestone 4 — the swimmer-logged "actual" counterpart to a
+ * PlanSetTarget's prescribed pace. One row per plan_set_target (unique),
+ * upsertable so a swimmer can correct a logged value.
+ */
+export interface PlanSetResult {
+  id: string
+  plan_set_target_id: string
+  swimmer_id: string
+  actual_pace_seconds: number
+  recorded_at: string
+}
+
 export interface Milestone {
   id: string
   profile_id: string

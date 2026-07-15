@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Gauge, Save, Info } from 'lucide-react'
+import { Gauge, Save, Info, Sparkles } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
@@ -8,7 +8,8 @@ import { StatTile } from '@/components/ui/StatTile'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useMySwimmer } from '@/hooks/useMySwimmer'
-import { useMyCssResult, useSaveCssResult } from '@/hooks/useCssResults'
+import { useMyCssResult, useSaveCssResult, useAcceptCssTweak } from '@/hooks/useCssResults'
+import { useCssTweakSuggestion } from '@/hooks/usePlanSetResults'
 import { formatTime, parseTime } from '@/lib/formatTime'
 import {
   calculateCss,
@@ -30,6 +31,25 @@ export function CssTestPage() {
   const { data: swimmer } = useMySwimmer()
   const { data: dbResult } = useMyCssResult()
   const saveCssResult = useSaveCssResult()
+  const { data: tweakSuggestion } = useCssTweakSuggestion(swimmer?.id)
+  const acceptTweak = useAcceptCssTweak()
+  // Dismissing is local-only and keyed to the specific suggestion, so a
+  // genuinely new suggestion (different tier/pace) still surfaces even if
+  // an earlier one was dismissed.
+  const [dismissedKey, setDismissedKey] = useLocalStorage<string | null>(
+    `swimcoach:css-tweak-dismissed:${swimmer?.id ?? 'me'}`,
+    null,
+  )
+  const suggestionKey = tweakSuggestion
+    ? `${tweakSuggestion.tier}:${tweakSuggestion.direction}:${tweakSuggestion.suggestedPacePer100.toFixed(1)}`
+    : null
+  const showSuggestion = Boolean(tweakSuggestion) && suggestionKey !== dismissedKey
+
+  const acceptSuggestion = async () => {
+    if (!swimmer?.id || !tweakSuggestion) return
+    await acceptTweak.mutateAsync({ swimmer_id: swimmer.id, pace_per_100: tweakSuggestion.suggestedPacePer100 })
+    setDismissedKey(null)
+  }
 
   // localStorage fallback for offline / pre-account use
   const [stored, setStored] = useLocalStorage<StoredTrial | null>(
@@ -77,12 +97,23 @@ export function CssTestPage() {
     setShort('')
   }
 
-  // Supabase is the source of truth; fall back to localStorage
-  const activeResult: StoredTrial | null = dbResult
-    ? { t400: dbResult.t400, t200: dbResult.t200 }
-    : stored
+  // The raw 400/200 trial times, when there are any to show — an accepted
+  // CSS tweak (source = 'adjustment') has no time trial behind it.
+  const rawTrial: StoredTrial | null =
+    dbResult && dbResult.t400 != null && dbResult.t200 != null
+      ? { t400: dbResult.t400, t200: dbResult.t200 }
+      : !dbResult
+        ? stored
+        : null
 
-  const css = activeResult ? calculateCss(activeResult.t400, activeResult.t200) : null
+  // Supabase is the source of truth. Trust its stored pace_per_100 directly
+  // rather than recomputing from t400/t200 — that also works uniformly for
+  // an adjustment row, which has no t400/t200 at all.
+  const css = dbResult
+    ? { pacePer100: dbResult.pace_per_100, speedMps: 100 / dbResult.pace_per_100 }
+    : stored
+      ? calculateCss(stored.t400, stored.t200)
+      : null
 
   return (
     <div className="space-y-8">
@@ -138,6 +169,29 @@ export function CssTestPage() {
         </Card>
       </div>
 
+      {showSuggestion && tweakSuggestion && (
+        <Card className="border-accent/30 bg-accent/5">
+          <CardHeader
+            title="CSS pace suggestion"
+            subtitle={`Your CSS pace looks ~${Math.round(Math.abs(tweakSuggestion.avgDeviationPct) * 100)}% ${
+              tweakSuggestion.direction === 'faster' ? 'conservative' : 'aggressive'
+            } based on your last 3 CSS-anchored sessions — update to ${formatTime(tweakSuggestion.suggestedPacePer100)}/100m?`}
+          />
+          <div className="flex items-center gap-2">
+            <Button
+              leftIcon={<Sparkles className="h-4 w-4" />}
+              loading={acceptTweak.isPending}
+              onClick={acceptSuggestion}
+            >
+              Update to {formatTime(tweakSuggestion.suggestedPacePer100)}
+            </Button>
+            <Button variant="ghost" onClick={() => setDismissedKey(suggestionKey)}>
+              Dismiss
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {!css ? (
         <EmptyState
           icon={<Gauge className="h-6 w-6" />}
@@ -160,11 +214,19 @@ export function CssTestPage() {
                 value={`${css.speedMps.toFixed(2)} m/s`}
                 hint="sustainable"
               />
-              <StatTile
-                label="From trial"
-                value={`${formatTime(activeResult!.t400)} / ${formatTime(activeResult!.t200)}`}
-                hint={`${CSS_LONG}m · ${CSS_SHORT}m`}
-              />
+              {rawTrial ? (
+                <StatTile
+                  label="From trial"
+                  value={`${formatTime(rawTrial.t400)} / ${formatTime(rawTrial.t200)}`}
+                  hint={`${CSS_LONG}m · ${CSS_SHORT}m`}
+                />
+              ) : (
+                <StatTile
+                  label="Source"
+                  value="Training-based"
+                  hint="adjusted from recent CSS-anchored sets"
+                />
+              )}
             </div>
           </div>
 

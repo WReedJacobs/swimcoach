@@ -10,8 +10,9 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
 import { useMySwimmer, useAssignedSessions } from '@/hooks/useMySwimmer'
 import { useLogTime } from '@/hooks/useTimes'
+import { useCssAnchoredSets, useLogPlanSetResult } from '@/hooks/usePlanSetResults'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
-import { parseTime } from '@/lib/formatTime'
+import { formatTime, parseTime } from '@/lib/formatTime'
 import { localDateStr } from '@/lib/dateLocal'
 import { cn } from '@/lib/cn'
 import { STROKES, DISTANCES } from '@/types'
@@ -126,6 +127,80 @@ function CheckableBlocks({ session }: { session: Session }) {
   )
 }
 
+/** Milestone 4 — lets the swimmer log the pace they actually achieved for
+ * each CSS-anchored prescribed set, feeding the adaptive CSS suggestion
+ * (see cssTweak.ts / CssTestPage). Only sets with a concrete
+ * target_pace_seconds show up here; nothing is required to complete a
+ * session. */
+function CssAnchoredSetLogger({ sessionId, swimmerId }: { sessionId: string; swimmerId: string }) {
+  const { data: sets } = useCssAnchoredSets(sessionId)
+  const logResult = useLogPlanSetResult()
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+
+  if (!sets || sets.length === 0) return null
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium uppercase tracking-wide text-text-muted">CSS-anchored sets</p>
+      <div className="space-y-2">
+        {sets.map((s) => {
+          const draft = drafts[s.id] ?? ''
+          const draftSecs = draft.length > 0 ? parseTime(draft) : null
+          const editing = draft.length > 0 || s.actual_pace_seconds == null
+          return (
+            <div key={s.id} className="flex items-center justify-between gap-3 rounded-component bg-bg p-3 text-sm">
+              <div>
+                <p className="text-text-primary">
+                  {s.reps} × {s.distance_meters}m{s.stroke ? ` ${s.stroke}` : ''}
+                </p>
+                <p className="font-mono text-xs tabular-nums text-text-muted">
+                  target {formatTime(s.target_pace_seconds!)}
+                </p>
+              </div>
+              {editing ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-24">
+                    <Input
+                      placeholder="1:32.0"
+                      value={draft}
+                      onChange={(e) => setDrafts((p) => ({ ...p, [s.id]: e.target.value }))}
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={draftSecs == null}
+                    loading={logResult.isPending}
+                    onClick={async () => {
+                      if (draftSecs == null) return
+                      await logResult.mutateAsync({
+                        plan_set_target_id: s.id,
+                        swimmer_id: swimmerId,
+                        actual_pace_seconds: draftSecs,
+                        session_id: sessionId,
+                      })
+                      setDrafts((p) => ({ ...p, [s.id]: '' }))
+                    }}
+                  >
+                    Log
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  className="font-mono text-xs tabular-nums text-secondary hover:underline"
+                  onClick={() => setDrafts((p) => ({ ...p, [s.id]: formatTime(s.actual_pace_seconds!) }))}
+                >
+                  logged {formatTime(s.actual_pace_seconds!)} · edit
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 type FlashType = 'pb' | 'saved' | null
 
 export function TodaySessionPage() {
@@ -183,6 +258,7 @@ export function TodaySessionPage() {
                 <Badge tone="blue" className="capitalize">{todaySession.type}</Badge>
               </div>
               <CheckableBlocks session={todaySession} />
+              {swimmer && <CssAnchoredSetLogger sessionId={todaySession.id} swimmerId={swimmer.id} />}
               {todaySession.notes && (
                 <p className="rounded-component bg-bg p-3 text-sm text-text-secondary">{todaySession.notes}</p>
               )}

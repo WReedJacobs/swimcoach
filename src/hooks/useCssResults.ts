@@ -5,9 +5,13 @@ import { useMySwimmer } from './useMySwimmer'
 export interface CssResult {
   id: string
   swimmer_id: string
-  t400: number
-  t200: number
+  // Nullable since Milestone 4 (adaptive CSS pacing loop): an accepted CSS
+  // tweak is inserted as source = 'adjustment' with only pace_per_100 set —
+  // there's no real 400/200 time trial behind it.
+  t400: number | null
+  t200: number | null
   pace_per_100: number
+  source: 'test' | 'adjustment'
   recorded_at: string
 }
 
@@ -65,6 +69,30 @@ export function useSaveCssResult() {
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ['css-result', vars.swimmer_id] })
       qc.invalidateQueries({ queryKey: ['css-result-for', vars.swimmer_id] })
+    },
+  })
+}
+
+/** Milestone 4 — accepting a computeCssTweakSuggestion result. Inserts a
+ * new css_results row rather than mutating one in place (there's no
+ * mutable "current CSS" field to update — see 027_css_tweak.sql), so
+ * subsequent plan generation picks it up via the same
+ * order-by-recorded_at-desc query every other read site already uses. */
+export function useAcceptCssTweak() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { swimmer_id: string; pace_per_100: number }) => {
+      const { error } = await supabase.from('css_results').insert({
+        swimmer_id: input.swimmer_id,
+        pace_per_100: input.pace_per_100,
+        source: 'adjustment',
+      })
+      if (error) throw error
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['css-result', vars.swimmer_id] })
+      qc.invalidateQueries({ queryKey: ['css-result-for', vars.swimmer_id] })
+      qc.invalidateQueries({ queryKey: ['css-tweak-suggestion', vars.swimmer_id] })
     },
   })
 }
