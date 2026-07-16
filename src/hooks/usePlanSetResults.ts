@@ -4,34 +4,39 @@ import { computeCssTweakSuggestion, type SetPaceSample, type CssTweakSuggestion 
 import { useMyCssResult } from './useCssResults'
 import type { PlanSetTarget } from '@/types'
 
-/** CSS-anchored (target_pace_seconds set) plan_set_targets for a session,
- * with any already-logged actual pace joined in — what TodaySessionPage
- * needs to render "log your actual pace" inputs next to each prescribed
- * set. Sets without a concrete target_pace_seconds (css_offset_seconds-only
- * or intensity-zone-only) are out of scope for Milestone 4's comparison,
- * same simplification the edge function's own prompt already favours
- * ("prefer target_pace_seconds directly when you have a CSS anchor"). */
-export interface CssAnchoredSet extends PlanSetTarget {
+/** Every structured plan_set_targets row for a session (not just
+ * CSS-paced ones — a set with only css_offset_seconds or intensity_zone
+ * still gets logged against, it just won't feed the CSS-tweak comparison,
+ * which filters to target_pace_seconds itself), with any already-logged
+ * actual pace joined in. This is what lets "Log time" show the swimmer
+ * their actual prescribed sets instead of a context-free stroke/distance
+ * form — only generated (goal-race) sessions have rows here; a plain
+ * manually-authored session returns an empty list and the caller falls
+ * back to the free-text warm_up/main_set/cool_down blocks. */
+export interface SessionSetTarget extends PlanSetTarget {
   actual_pace_seconds: number | null
   plan_set_result_id: string | null
 }
 
-export function useCssAnchoredSets(sessionId: string | undefined) {
+export function useSessionSetTargets(sessionId: string | undefined) {
   return useQuery({
-    queryKey: ['css-anchored-sets', sessionId],
+    queryKey: ['session-set-targets', sessionId],
     enabled: Boolean(sessionId),
-    queryFn: async (): Promise<CssAnchoredSet[]> => {
+    queryFn: async (): Promise<SessionSetTarget[]> => {
       const { data, error } = await supabase
         .from('plan_set_targets')
         .select('*, plan_set_results(id, actual_pace_seconds)')
         .eq('session_id', sessionId!)
-        .not('target_pace_seconds', 'is', null)
         .order('block', { ascending: true })
         .order('set_order', { ascending: true })
       if (error) throw error
-      return ((data ?? []) as Array<PlanSetTarget & { plan_set_results: { id: string; actual_pace_seconds: number }[] }>).map(
-        (row): CssAnchoredSet => {
-          const result = row.plan_set_results?.[0] ?? null
+      type ResultRef = { id: string; actual_pace_seconds: number }
+      // plan_set_target_id is unique on plan_set_results, so PostgREST
+      // treats this as a to-one relation and embeds a single object, not
+      // an array — unlike the many-to-one embeds elsewhere in this file.
+      return ((data ?? []) as Array<PlanSetTarget & { plan_set_results: ResultRef | ResultRef[] | null }>).map(
+        (row): SessionSetTarget => {
+          const result = Array.isArray(row.plan_set_results) ? (row.plan_set_results[0] ?? null) : row.plan_set_results
           return {
             id: row.id,
             session_id: row.session_id,
@@ -74,7 +79,7 @@ export function useLogPlanSetResult() {
       if (error) throw error
     },
     onSuccess: (_d, vars) => {
-      qc.invalidateQueries({ queryKey: ['css-anchored-sets', vars.session_id] })
+      qc.invalidateQueries({ queryKey: ['session-set-targets', vars.session_id] })
       qc.invalidateQueries({ queryKey: ['css-tweak-suggestion', vars.swimmer_id] })
     },
   })

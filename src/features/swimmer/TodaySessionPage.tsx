@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarDays, Plus, Trophy, CheckCircle2, Check } from 'lucide-react'
+import { CalendarDays, Plus, Trophy, CheckCircle2, Check, ChevronRight } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
 import { useMySwimmer, useAssignedSessions } from '@/hooks/useMySwimmer'
 import { useLogTime } from '@/hooks/useTimes'
-import { useCssAnchoredSets, useLogPlanSetResult } from '@/hooks/usePlanSetResults'
+import { useSessionSetTargets, useLogPlanSetResult } from '@/hooks/usePlanSetResults'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { formatTime, parseTime } from '@/lib/formatTime'
 import { localDateStr } from '@/lib/dateLocal'
@@ -84,6 +84,26 @@ const BLOCKS: { key: string; label: string; field: keyof Session }[] = [
   { key: 'cool_down', label: 'Cool-down', field: 'cool_down' },
 ]
 
+/** Read-only rendering of a session's warm-up/main-set/cool-down text —
+ * used both for previewing a future ("Coming up") session and as context
+ * inside the "Log time" modal. No check-off interaction; that only makes
+ * sense for the session actually being done today (see CheckableBlocks). */
+function SessionBlocksView({ session }: { session: Session }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-3">
+      {BLOCKS.map(({ key, label, field }) => {
+        const body = session[field] as string | null
+        return (
+          <div key={key} className="rounded-component bg-bg p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-text-muted">{label}</p>
+            <p className="mt-1 whitespace-pre-line text-sm text-text-primary">{body || '—'}</p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function CheckableBlocks({ session }: { session: Session }) {
   const [done, setDone] = useLocalStorage<Record<string, boolean>>(`sc_block_done_${localDateStr()}`, {})
 
@@ -127,13 +147,21 @@ function CheckableBlocks({ session }: { session: Session }) {
   )
 }
 
-/** Milestone 4 — lets the swimmer log the pace they actually achieved for
- * each CSS-anchored prescribed set, feeding the adaptive CSS suggestion
- * (see cssTweak.ts / CssTestPage). Only sets with a concrete
- * target_pace_seconds show up here; nothing is required to complete a
- * session. */
-function CssAnchoredSetLogger({ sessionId, swimmerId }: { sessionId: string; swimmerId: string }) {
-  const { data: sets } = useCssAnchoredSets(sessionId)
+function targetLabel(s: { target_pace_seconds: number | null; css_offset_seconds: number | null; intensity_zone: string | null }) {
+  if (s.target_pace_seconds != null) return `target ${formatTime(s.target_pace_seconds)}`
+  if (s.css_offset_seconds != null) return `target CSS${s.css_offset_seconds >= 0 ? '+' : ''}${s.css_offset_seconds}`
+  if (s.intensity_zone) return s.intensity_zone
+  return null
+}
+
+/** Lets the swimmer log the time/pace they actually achieved against each
+ * of the session's *structured* prescribed sets (goal-race generated
+ * sessions only — see plan_set_targets). Feeds Milestone 4's adaptive CSS
+ * suggestion for sets with a concrete target_pace_seconds; for the rest
+ * it's just a record of what was actually done. Nothing here is required
+ * to complete a session. */
+function SetTargetLogger({ sessionId, swimmerId }: { sessionId: string; swimmerId: string }) {
+  const { data: sets } = useSessionSetTargets(sessionId)
   const logResult = useLogPlanSetResult()
   const [drafts, setDrafts] = useState<Record<string, string>>({})
 
@@ -141,21 +169,22 @@ function CssAnchoredSetLogger({ sessionId, swimmerId }: { sessionId: string; swi
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium uppercase tracking-wide text-text-muted">CSS-anchored sets</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-text-muted">Log your sets</p>
       <div className="space-y-2">
         {sets.map((s) => {
           const draft = drafts[s.id] ?? ''
           const draftSecs = draft.length > 0 ? parseTime(draft) : null
           const editing = draft.length > 0 || s.actual_pace_seconds == null
+          const target = targetLabel(s)
           return (
             <div key={s.id} className="flex items-center justify-between gap-3 rounded-component bg-bg p-3 text-sm">
               <div>
                 <p className="text-text-primary">
                   {s.reps} × {s.distance_meters}m{s.stroke ? ` ${s.stroke}` : ''}
                 </p>
-                <p className="font-mono text-xs tabular-nums text-text-muted">
-                  target {formatTime(s.target_pace_seconds!)}
-                </p>
+                {target && (
+                  <p className="font-mono text-xs tabular-nums text-text-muted">{target}</p>
+                )}
               </div>
               {editing ? (
                 <div className="flex items-center gap-2">
@@ -201,6 +230,39 @@ function CssAnchoredSetLogger({ sessionId, swimmerId }: { sessionId: string; swi
   )
 }
 
+/** The "Log time" modal's contents — structured per-set logging when the
+ * session has any (goal-race generated sessions), a free-form swim logger
+ * always available underneath, and the raw warm-up/main-set/cool-down text
+ * shown as context when there's nothing structured to log against. */
+function LogTimeModalContent({
+  session,
+  swimmerId,
+  onDone,
+}: {
+  session: Session
+  swimmerId: string
+  onDone: (isPb: boolean) => void
+}) {
+  const { data: sets } = useSessionSetTargets(session.id)
+  const hasStructuredSets = (sets ?? []).length > 0
+
+  return (
+    <div className="space-y-5">
+      {hasStructuredSets ? (
+        <SetTargetLogger sessionId={session.id} swimmerId={swimmerId} />
+      ) : (
+        <SessionBlocksView session={session} />
+      )}
+      <div className="border-t border-border pt-4">
+        <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-muted">
+          {hasStructuredSets ? 'Log a different swim' : 'Log a swim'}
+        </p>
+        <LogTimePanel session={session} swimmerId={swimmerId} onDone={onDone} />
+      </div>
+    </div>
+  )
+}
+
 type FlashType = 'pb' | 'saved' | null
 
 export function TodaySessionPage() {
@@ -211,6 +273,7 @@ export function TodaySessionPage() {
   const upcoming = (sessions ?? []).filter((s) => s.date > today).reverse()
 
   const [logOpen, setLogOpen] = useState(false)
+  const [previewSession, setPreviewSession] = useState<Session | null>(null)
   const [flash, setFlash] = useState<FlashType>(null)
 
   const handleDone = (isPb: boolean) => {
@@ -258,7 +321,6 @@ export function TodaySessionPage() {
                 <Badge tone="blue" className="capitalize">{todaySession.type}</Badge>
               </div>
               <CheckableBlocks session={todaySession} />
-              {swimmer && <CssAnchoredSetLogger sessionId={todaySession.id} swimmerId={swimmer.id} />}
               {todaySession.notes && (
                 <p className="rounded-component bg-bg p-3 text-sm text-text-secondary">{todaySession.notes}</p>
               )}
@@ -287,9 +349,17 @@ export function TodaySessionPage() {
             <CardHeader title="Coming up" />
             <ul className="space-y-2">
               {upcoming.map((s) => (
-                <li key={s.id} className="flex items-center justify-between rounded-component bg-bg p-3 text-sm">
-                  <span className="font-medium text-text-primary">{s.title}</span>
-                  <span className="font-mono tabular-nums text-text-secondary">{new Date(s.date).toLocaleDateString()}</span>
+                <li key={s.id}>
+                  <button
+                    onClick={() => setPreviewSession(s)}
+                    className="flex w-full items-center justify-between gap-2 rounded-component bg-bg p-3 text-left text-sm transition-colors hover:bg-border/40"
+                  >
+                    <span className="font-medium text-text-primary">{s.title}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono tabular-nums text-text-secondary">{new Date(s.date).toLocaleDateString()}</span>
+                      <ChevronRight className="h-4 w-4 text-text-muted" />
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -299,9 +369,26 @@ export function TodaySessionPage() {
 
       {todaySession && swimmer && (
         <Modal open={logOpen} onClose={() => setLogOpen(false)} title={`Log time for ${todaySession.title}`}>
-          <LogTimePanel session={todaySession} swimmerId={swimmer.id} onDone={handleDone} />
+          <LogTimeModalContent session={todaySession} swimmerId={swimmer.id} onDone={handleDone} />
         </Modal>
       )}
+
+      <Modal open={previewSession != null} onClose={() => setPreviewSession(null)} title={previewSession?.title ?? ''}>
+        {previewSession && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Badge tone="blue" className="capitalize">{previewSession.type}</Badge>
+              <span className="font-mono text-sm tabular-nums text-text-secondary">
+                {new Date(previewSession.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+              </span>
+            </div>
+            <SessionBlocksView session={previewSession} />
+            {previewSession.notes && (
+              <p className="rounded-component bg-bg p-3 text-sm text-text-secondary">{previewSession.notes}</p>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
