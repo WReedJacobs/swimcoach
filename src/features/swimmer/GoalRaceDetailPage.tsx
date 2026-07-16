@@ -7,6 +7,7 @@ import { StatTile } from '@/components/ui/StatTile'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
+import { RaceWeekChecklistCard } from '@/components/RaceWeekChecklistCard'
 import { useAuth } from '@/hooks/useAuth'
 import { useMySwimmer } from '@/hooks/useMySwimmer'
 import {
@@ -136,6 +137,8 @@ export function GoalRaceDetailPage() {
           value={race.target_time_seconds ? formatTime(race.target_time_seconds) : '—'}
         />
       </div>
+
+      {currentPhase === 'taper' && <RaceWeekChecklistCard daysToRace={daysOut ?? 0} />}
 
       {!hasAnyPlan && (
         <Card>

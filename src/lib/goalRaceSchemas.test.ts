@@ -102,4 +102,27 @@ describe('generatedPlanSchema', () => {
     })
     expect(result.success).toBe(false)
   })
+
+  const validWeek = {
+    week_number: 1,
+    phase: 'base' as const,
+    sessions: [{ title: 'Session', day_of_week: 1, sets: [{ block: 'main_set' as const, set_order: 0, reps: 8, distance_meters: 100 }] }],
+  }
+
+  it('tolerates a bare week object with the array wrapper dropped', () => {
+    const result = generatedPlanSchema.safeParse({ weeks: validWeek })
+    expect(result.success).toBe(true)
+  })
+
+  it('tolerates the weeks array double-encoded as a JSON string', () => {
+    const result = generatedPlanSchema.safeParse({ weeks: JSON.stringify([validWeek]) })
+    expect(result.success).toBe(true)
+  })
+
+  it('tolerates the whole {weeks:[...]} shape nested one level too deep', () => {
+    const result = generatedPlanSchema.safeParse({
+      weeks: JSON.stringify({ weeks: [validWeek] }),
+    })
+    expect(result.success).toBe(true)
+  })
 })

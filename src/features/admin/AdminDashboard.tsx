@@ -30,7 +30,7 @@ import { Input, Select, Textarea } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { SkeletonCards } from '@/components/ui/Skeleton'
 import { useAuth } from '@/hooks/useAuth'
-import type { Role, Level, Stroke, Drill, BookingStatus } from '@/types'
+import type { Role, Level, Stroke, Drill, DrillEnvironment, BookingStatus } from '@/types'
 import { STROKES } from '@/types'
 import {
   useAllProfiles,
@@ -740,6 +740,7 @@ type DrillForm = {
   stroke: Stroke | ''
   level: Level | ''
   video_url: string
+  environment: DrillEnvironment
 }
 
 const EMPTY_DRILL: DrillForm = {
@@ -749,6 +750,7 @@ const EMPTY_DRILL: DrillForm = {
   stroke: '',
   level: '',
   video_url: '',
+  environment: 'pool',
 }
 
 function DrillsTab() {
@@ -786,6 +788,7 @@ function DrillsTab() {
         stroke: d.stroke ?? '',
         level: d.level ?? '',
         video_url: d.video_url ?? '',
+        environment: d.environment,
       },
     })
   }
@@ -809,6 +812,7 @@ function DrillsTab() {
       level: (form.level || null) as Level | null,
       focus: null as string | null,
       video_url: form.video_url.trim() || null,
+      environment: form.environment,
     }
     if (id) {
       updateDrill.mutate(
@@ -941,6 +945,14 @@ function DrillsTab() {
               ))}
             </Select>
           </div>
+          <Select
+            label="Environment"
+            value={editModal.form.environment}
+            onChange={(e) => setField('environment', e.target.value as DrillEnvironment)}
+          >
+            <option value="pool">Pool</option>
+            <option value="open_water">Open water</option>
+          </Select>
           <Textarea
             label="Plain description"
             rows={3}

@@ -12,6 +12,7 @@ export type Stroke =
 export type SessionType = 'training' | 'race' | 'dryland'
 export type BookingStatus = 'pending' | 'confirmed' | 'cancelled'
 export type Course = 'SCM' | 'LCM' | 'SCY'
+export type DrillEnvironment = 'pool' | 'open_water'
 
 export const STROKES: Stroke[] = [
   'freestyle',
@@ -138,6 +139,7 @@ export interface Drill {
   focus: string | null
   video_url: string | null
   created_at: string
+  environment: DrillEnvironment
 }
 
 export interface Feedback {

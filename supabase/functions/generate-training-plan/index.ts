@@ -119,6 +119,11 @@ function buildSystemPrompt(
   availability: { days_per_week: number; session_minutes: number; preferred_days: string[] },
 ): string {
   const taperInvolved = weeksToGenerate.some((w) => w.phase === 'taper')
+  const buildInvolved = weeksToGenerate.some((w) => w.phase === 'build')
+  // 'peak' is deliberately never assigned by computeTrainingPlanSkeleton
+  // (see trainingPlanPhases.ts) — it's folded into 'taper', so "Build/Peak"
+  // from the spec maps onto our actual 'build' and 'taper' phases.
+  const isOpenWaterEvent = goalRace.event_type === 'open_water' || goalRace.event_type === 'triathlon_leg'
   const phaseLines = weeksToGenerate.map((w) => `  - Week ${w.weekNumber}: ${w.phase}`).join('\n')
   const pbLines = recentPbs.length
     ? recentPbs.map((p) => `  - ${p.distance}m ${p.stroke}: ${formatTime(p.time_seconds)}`).join('\n')
@@ -138,6 +143,9 @@ Weeks you must generate this call (only these — do not generate any other week
 ${phaseLines}
 
 ${taperInvolved ? `HARD CONSTRAINT — taper weeks in this batch: total volume must be ${skeleton.volumeReductionPct.min}-${skeleton.volumeReductionPct.max}% BELOW the prior build week's volume. Intensity (target pace) must NOT be relaxed to compensate — paces stay at or near race pace, only volume drops. Taper is ${skeleton.taperDays.min}-${skeleton.taperDays.max} days by design for this event type.` : ''}
+
+${isOpenWaterEvent && buildInvolved ? `This is an open-water/triathlon-leg race. For Build-phase weeks in this batch, include sighting drills (lifting eyes to spot a landmark every 6-8 strokes without breaking stroke rhythm — set_type "sighting drill") and at least one longer continuous swim per week (no intervals, sustained race-effort distance, not broken into reps) to build open-water endurance.` : ''}
+${isOpenWaterEvent && taperInvolved ? `Also, since this is open-water/triathlon: add a short wetsuit-acclimation note to one taper-week session's set_type or a cool_down set (e.g. a continuous swim done with a shortened, higher-elbow recovery to mimic wetsuit-restricted shoulder mobility, with a reminder that the swimmer should do at least one practice swim in their actual wetsuit before race day).` : ''}
 
 Swimmer's CSS pace (critical swim speed, per 100m): ${cssPacePer100 != null ? formatTime(cssPacePer100) : 'not available — use event-appropriate paces from the recent PBs below instead, and favour effort-zone (intensity_zone) targets over exact target_pace_seconds where CSS is unknown'}.
 Use CSS pace (target_pace_seconds, or css_offset_seconds as an offset from CSS) as the anchor for main-set target paces wherever CSS is available.

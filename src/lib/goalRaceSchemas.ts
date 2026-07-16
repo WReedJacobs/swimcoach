@@ -66,11 +66,18 @@ export type PlanWeekInput = z.infer<typeof planWeekSchema>
 
 export const generatedPlanSchema = z.object({
   // Tool-use output for a single requested week occasionally comes back
-  // as a bare week object (array wrapper dropped) or as that array/object
-  // double-encoded into a JSON string — tolerate both rather than
-  // rejecting an otherwise-valid plan.
+  // malformed in one of a few equivalent ways: a bare week object (array
+  // wrapper dropped), that array/object double-encoded into a JSON
+  // string, or the whole { weeks: [...] } shape nested one level too
+  // deep (i.e. { weeks: "{\"weeks\":[...]}" } — the model wrapped its own
+  // output again). Unwrap all of these rather than rejecting an
+  // otherwise-valid plan.
   weeks: z.preprocess((val) => {
     if (typeof val === 'string') val = JSON.parse(val)
+    if (val && typeof val === 'object' && !Array.isArray(val) && 'weeks' in val) {
+      val = (val as { weeks: unknown }).weeks
+      if (typeof val === 'string') val = JSON.parse(val)
+    }
     return Array.isArray(val) ? val : [val]
   }, z.array(planWeekSchema).min(1)),
 })
