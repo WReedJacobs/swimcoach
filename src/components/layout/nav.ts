@@ -13,6 +13,7 @@ import {
   BookOpen,
   Award,
   Compass,
+  Flag,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -27,7 +28,10 @@ export interface NavItem {
   icon: LucideIcon
 }
 
-// Trimmed to ≤8 items per role (core daily-use screens only)
+// Core daily-use screens per role. Kept short, but every top-level feature
+// must have an entry here — burying something behind a dashboard-only
+// drill-down (as Goal Race was until it turned out to be genuinely hard to
+// find) isn't an acceptable substitute for a nav item.
 const coachNav: NavItem[] = [
   { label: 'Dashboard', to: '/coach', icon: LayoutDashboard },
   { label: 'Roster', to: '/coach/roster', icon: Users },
@@ -43,7 +47,8 @@ const swimmerNav: NavItem[] = [
   { label: 'Dashboard', to: '/swimmer', icon: LayoutDashboard },
   { label: "Today's Session", mobileLabel: 'Today', to: '/swimmer/today', icon: CalendarDays },
   { label: 'My Times', to: '/swimmer/times', icon: Timer },
-  { label: 'Goals', to: '/swimmer/goals', icon: Target },
+  { label: 'Event Goals', mobileLabel: 'Goals', to: '/swimmer/goals', icon: Target },
+  { label: 'Goal Race', to: '/swimmer/goal-race', icon: Flag },
   { label: 'Schedule', to: '/swimmer/schedule', icon: CalendarCheck },
   { label: 'Feedback', to: '/swimmer/feedback', icon: ClipboardList },
   { label: 'Messages', to: '/swimmer/messages', icon: MessageSquare },
