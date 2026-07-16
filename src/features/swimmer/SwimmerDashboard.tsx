@@ -10,6 +10,7 @@ import { SessionBlocks } from '@/components/SessionBlocks'
 import { TimesChart } from '@/components/charts/TimesChart'
 import { SwimmerCard } from '@/components/ui/SwimmerCard'
 import { TierUpModal } from '@/components/ui/TierUpModal'
+import { LoadFlagBadge } from '@/components/ui/LoadFlagBadge'
 import { useMySwimmer, useAssignedSessions } from '@/hooks/useMySwimmer'
 import { useGoalRaces } from '@/hooks/useGoalRaces'
 import { GOAL_EVENT_TYPE_LABELS } from '@/types'
@@ -197,7 +198,7 @@ export function SwimmerDashboard() {
       )}
 
       <div>
-        <SectionHeader kicker="Overview" />
+        <SectionHeader kicker="Overview" action={<LoadFlagBadge swimmerId={swimmer?.id} />} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatTile label="Times logged" value={times?.length ?? 0} />
           <StatTile label="Personal bests" value={pbCount} accent />

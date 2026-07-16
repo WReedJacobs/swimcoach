@@ -13,6 +13,7 @@ export interface OutboxEntry {
   session_id?: string | null
   is_self_logged?: boolean
   laps?: number[]
+  rpe?: number | null
   queued_at: string
 }
 

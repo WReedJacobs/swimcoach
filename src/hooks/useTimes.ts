@@ -55,6 +55,9 @@ export interface LogTimeInput {
   drill_id?: string | null
   is_self_logged?: boolean
   laps?: number[]
+  /** Rate of perceived exertion, 1-10 — optional, feeds Milestone 5's
+   * training-load flag (see trainingLoad.ts). */
+  rpe?: number | null
 }
 
 export interface LogTimeResult {
@@ -113,6 +116,7 @@ export function useLogTime() {
           session_id: input.session_id,
           is_self_logged: input.is_self_logged,
           laps: input.laps,
+          rpe: input.rpe,
         })
         const err = Object.assign(
           new Error('Time saved — will sync when back online'),
@@ -149,6 +153,7 @@ export function useLogTime() {
           is_pb: isPb,
           is_self_logged: input.is_self_logged ?? false,
           notes: input.notes || null,
+          rpe: input.rpe ?? null,
         })
         .select('*')
         .single()

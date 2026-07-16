@@ -8,6 +8,7 @@ import { Stopwatch } from '@/components/ui/Stopwatch'
 import { LevelBadge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { RpeSelector } from '@/components/ui/RpeSelector'
 import { cn } from '@/lib/cn'
 import { formatTime, parseTime } from '@/lib/formatTime'
 import { localDateStr } from '@/lib/dateLocal'
@@ -151,6 +152,7 @@ function StopwatchMode({
   const [pending, setPending] = useState<number | null>(null)
   const [manual, setManual] = useState('')
   const [notes, setNotes] = useState('')
+  const [rpe, setRpe] = useState<number | null>(null)
   const [result, setResult] = useState<{ seconds: number; isPb: boolean } | null>(null)
 
   const filtered = useMemo(
@@ -176,10 +178,12 @@ function StopwatchMode({
       session_id: sessionId || null,
       drill_id: drillId || null,
       notes,
+      rpe,
     })
     setResult({ seconds: pending, isPb: res.isPb })
     setPending(null)
     setNotes('')
+    setRpe(null)
     setManual('')
   }
 
@@ -286,6 +290,7 @@ function StopwatchMode({
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                   />
+                  <RpeSelector value={rpe} onChange={setRpe} />
                   <div className="flex gap-2">
                     <Button leftIcon={<Save className="h-4 w-4" />} loading={logTime.isPending} onClick={save}>
                       Log this time
@@ -348,10 +353,11 @@ interface BulkRow {
   course: Course
   drillId: string
   raw: string
+  rpe: number | null
 }
 
 function emptyRow(swimmerId: string): BulkRow {
-  return { swimmerId, stroke: 'freestyle', distance: 100, course: 'SCM', drillId: '', raw: '' }
+  return { swimmerId, stroke: 'freestyle', distance: 100, course: 'SCM', drillId: '', raw: '', rpe: null }
 }
 
 function BulkMode({
@@ -395,6 +401,7 @@ function BulkMode({
         time_seconds: seconds,
         session_id: sessionId || null,
         drill_id: r.drillId || null,
+        rpe: r.rpe,
       })
       count++
     }
@@ -464,6 +471,7 @@ function BulkMode({
                 onChange={(e) => update(i, { raw: e.target.value })}
                 error={invalid ? 'Invalid' : undefined}
               />
+              <RpeSelector value={r.rpe} onChange={(rpe) => update(i, { rpe })} label="RPE" />
             </div>
           )
         })}
@@ -480,6 +488,7 @@ function BulkMode({
               <th className="py-2 pr-3">Course</th>
               {drills.length > 0 && <th className="py-2 pr-3">Drill</th>}
               <th className="py-2 pr-3">Time</th>
+              <th className="py-2 pr-3">RPE</th>
             </tr>
           </thead>
           <tbody>
@@ -527,6 +536,9 @@ function BulkMode({
                       onChange={(e) => update(i, { raw: e.target.value })}
                       error={invalid ? 'Invalid' : undefined}
                     />
+                  </td>
+                  <td className="py-2 pr-3">
+                    <RpeSelector value={r.rpe} onChange={(rpe) => update(i, { rpe })} label={null} />
                   </td>
                 </tr>
               )

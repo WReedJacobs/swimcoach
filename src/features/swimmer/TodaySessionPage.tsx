@@ -8,6 +8,7 @@ import { Input, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
+import { RpeSelector } from '@/components/ui/RpeSelector'
 import { useMySwimmer, useAssignedSessions } from '@/hooks/useMySwimmer'
 import { useLogTime } from '@/hooks/useTimes'
 import { useSessionSetTargets, useLogPlanSetResult } from '@/hooks/usePlanSetResults'
@@ -31,6 +32,7 @@ function LogTimePanel({
   const [stroke, setStroke] = useState<Stroke>('freestyle')
   const [distance, setDistance] = useState(100)
   const [raw, setRaw] = useState('')
+  const [rpe, setRpe] = useState<number | null>(null)
 
   const save = async () => {
     const seconds = parseTime(raw)
@@ -42,8 +44,10 @@ function LogTimePanel({
       time_seconds: seconds,
       session_id: session.id,
       is_self_logged: true,
+      rpe,
     })
     setRaw('')
+    setRpe(null)
     onDone(result.isPb)
   }
 
@@ -68,6 +72,7 @@ function LogTimePanel({
         onChange={(e) => setRaw(e.target.value)}
         error={raw.length > 0 && parseTime(raw) == null ? 'Invalid time' : undefined}
       />
+      <RpeSelector value={rpe} onChange={setRpe} />
       <div className="flex justify-end gap-2">
         <Button variant="ghost" onClick={() => onDone(false)}>Cancel</Button>
         <Button loading={logTime.isPending} disabled={parseTime(raw) == null} onClick={save}>

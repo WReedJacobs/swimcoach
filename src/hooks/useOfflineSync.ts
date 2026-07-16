@@ -24,6 +24,7 @@ export function useOfflineSync() {
             session_id: entry.session_id,
             is_self_logged: entry.is_self_logged,
             laps: entry.laps,
+            rpe: entry.rpe,
           })
           removeFromQueue(entry.id)
           synced++

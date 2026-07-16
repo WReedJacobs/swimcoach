@@ -10,6 +10,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonCards } from '@/components/ui/Skeleton'
+import { LoadFlagBadge } from '@/components/ui/LoadFlagBadge'
 import { useSwimmers } from '@/hooks/useSwimmers'
 import { useSessions, useTodaySession } from '@/hooks/useSessions'
 import { useTimes } from '@/hooks/useTimes'
@@ -343,6 +344,7 @@ export function CoachDashboard() {
                       <p className="truncate text-sm font-medium text-text-primary">{swimmerName(sw)}</p>
                       <p className="truncate text-xs text-text-muted">{sw.squad || 'No squad'}</p>
                     </div>
+                    <LoadFlagBadge swimmerId={sw.id} />
                     <LevelBadge level={sw.level} />
                   </Link>
                 </li>

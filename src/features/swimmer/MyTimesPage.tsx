@@ -7,6 +7,7 @@ import { Input, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
+import { RpeSelector } from '@/components/ui/RpeSelector'
 import { useMySwimmer } from '@/hooks/useMySwimmer'
 import { useEnsureMySwimmerRow } from '@/hooks/useEnsureMySwimmerRow'
 import { useTimes, useSplits, useLogTime, useDeleteTime } from '@/hooks/useTimes'
@@ -112,6 +113,7 @@ export function MyTimesPage() {
   const [distance, setDistance] = useState(100)
   const [course, setCourse] = useState<Course>('SCM')
   const [raw, setRaw] = useState('')
+  const [rpe, setRpe] = useState<number | null>(null)
 
   // Filters + pagination
   const [filterCourse, setFilterCourse] = useState<Course | ''>('')
@@ -160,8 +162,10 @@ export function MyTimesPage() {
       course,
       time_seconds: seconds,
       is_self_logged: true,
+      rpe,
     })
     setRaw('')
+    setRpe(null)
     setOpen(false)
   }
 
@@ -352,6 +356,7 @@ export function MyTimesPage() {
             onChange={(e) => setRaw(e.target.value)}
             error={raw.length > 0 && parseTime(raw) == null ? 'Invalid time' : undefined}
           />
+          <RpeSelector value={rpe} onChange={setRpe} />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
             <Button loading={logTime.isPending} disabled={parseTime(raw) == null} onClick={save}>Save</Button>
