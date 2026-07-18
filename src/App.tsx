@@ -6,7 +6,7 @@ import { CursorFxLayer } from '@/components/CursorFxLayer'
 import { ProtectedRoute, AdminRoute, HomeRedirect } from '@/components/RouteGuards'
 import { AdminShell } from '@/features/admin/AdminShell'
 
-const CURSOR_FX_PATHS = new Set(['/', '/welcome', '/start', '/login', '/signup', '/role-select', '/forgot-password', '/reset-password'])
+const CURSOR_FX_PATHS = new Set(['/', '/welcome', '/welcome-classic', '/start', '/login', '/signup', '/role-select', '/forgot-password', '/reset-password'])
 
 function CursorFxGate() {
   const { pathname } = useLocation()
@@ -16,6 +16,25 @@ function CursorFxGate() {
 
 // ─── Lazy page imports ─────────────────────────────────────────────────────
 // Marketing
+// Primary landing = the WebGL pool hero. Kept lazy so its heavy three.js /
+// postprocessing bundle stays out of every other route's chunk and only
+// loads when someone actually hits the landing page.
+const WelcomeHeroV2  = lazy(() => import('@/features/marketing/hero-v2/WelcomeHeroV2').then(m => ({ default: m.WelcomeHeroV2 })))
+// Tiny still-water fill shown while the ~1MB hero chunk streams in, so /welcome
+// never flashes blank. Lives in the main bundle (the real HeroFallback ships
+// inside the lazy chunk, so it can't cover its own load).
+const HeroBoot = () => (
+  <div
+    aria-hidden
+    style={{
+      position: 'fixed',
+      inset: 0,
+      background:
+        'radial-gradient(120% 90% at 50% 0%, rgb(var(--c-surface)) 0%, rgb(var(--c-bg)) 60%)',
+    }}
+  />
+)
+// Previous hero, kept as a backup at /welcome-classic.
 const WelcomePage    = lazy(() => import('@/features/marketing/WelcomePage').then(m => ({ default: m.WelcomePage })))
 const OnboardingFlow = lazy(() => import('@/features/onboarding/OnboardingFlow').then(m => ({ default: m.OnboardingFlow })))
 
@@ -98,7 +117,9 @@ export default function App() {
       <Routes>
         {/* Entry — authenticated users skip marketing and go to their role home. */}
         <Route path="/" element={<HomeRedirect />} />
-        <Route path="/welcome" element={<WelcomePage />} />
+        <Route path="/welcome" element={<Suspense fallback={<HeroBoot />}><WelcomeHeroV2 /></Suspense>} />
+        <Route path="/welcome-classic" element={<WelcomePage />} />
+        <Route path="/welcome-v2" element={<Navigate to="/welcome" replace />} />
         <Route path="/start" element={<OnboardingFlow />} />
 
         {/* Auth */}

@@ -1,10 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import glsl from 'vite-plugin-glsl';
 import path from 'path';
 export default defineConfig({
     plugins: [
         react(),
+        // Only transforms `.glsl` imports (for the experimental /welcome-v2
+        // WebGL hero); no effect on any other file type or plugin.
+        glsl(),
         VitePWA({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png'],
