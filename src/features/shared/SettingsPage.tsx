@@ -1,17 +1,79 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Save, Lock, LogOut, RefreshCw, Moon, Sun, Monitor, Download, Trash2, AtSign } from 'lucide-react'
+import { Save, Lock, LogOut, RefreshCw, Moon, Sun, Monitor, Download, Trash2, AtSign, Activity, Unlink } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Modal } from '@/components/ui/Modal'
-import { supabase } from '@/lib/supabase'
+import { supabase, isLocalMode } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { useSwimmers } from '@/hooks/useSwimmers'
 import { useTheme, type Theme } from '@/hooks/useTheme'
+import { useStravaConnection, useSyncStrava, useDisconnectStrava, startStravaConnect } from '@/hooks/useStrava'
 import { cn } from '@/lib/cn'
+
+/** Connect/sync/disconnect card for Strava — auto-imports pool swims as
+ * logged times. Hidden in local mode: there's no backend to hold tokens. */
+function StravaCard() {
+  const { data: connection } = useStravaConnection()
+  const sync = useSyncStrava()
+  const disconnect = useDisconnectStrava()
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  if (isLocalMode) return null
+
+  const handleSync = async () => {
+    setMsg(null)
+    try {
+      const res = await sync.mutateAsync()
+      setMsg({ ok: true, text: `Imported ${res.imported} new swim${res.imported === 1 ? '' : 's'}` })
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : 'Sync failed' })
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader
+        title="Strava"
+        subtitle={
+          connection
+            ? `Connected · last synced ${connection.last_synced_at ? new Date(connection.last_synced_at).toLocaleString() : 'never'}`
+            : 'Auto-import your pool swims as logged times.'
+        }
+      />
+      {msg && (
+        <p className={`mb-3 text-sm ${msg.ok ? 'text-secondary' : 'text-danger'}`}>{msg.text}</p>
+      )}
+      {connection ? (
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            leftIcon={<RefreshCw className="h-4 w-4" />}
+            loading={sync.isPending}
+            onClick={handleSync}
+          >
+            Sync now
+          </Button>
+          <Button
+            variant="outline"
+            leftIcon={<Unlink className="h-4 w-4" />}
+            loading={disconnect.isPending}
+            onClick={() => disconnect.mutate()}
+          >
+            Disconnect
+          </Button>
+        </div>
+      ) : (
+        <Button leftIcon={<Activity className="h-4 w-4" />} onClick={() => startStravaConnect()}>
+          Connect Strava
+        </Button>
+      )}
+    </Card>
+  )
+}
 
 const THEME_OPTIONS: Array<{ value: Theme; label: string; icon: typeof Moon }> = [
   { value: 'dark', label: 'Dark', icon: Moon },
@@ -318,6 +380,14 @@ export function SettingsPage() {
           </div>
         </Card>
       </div>
+
+      {/* Integrations */}
+      {!isLocalMode && (
+        <div>
+          <SectionHeader kicker="Integrations" />
+          <StravaCard />
+        </div>
+      )}
 
       {/* Account */}
       <div>

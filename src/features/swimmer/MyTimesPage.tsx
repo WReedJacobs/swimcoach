@@ -1,9 +1,9 @@
 import { useMemo, useRef, useState } from 'react'
-import { Timer, Trophy, Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, Flag } from 'lucide-react'
+import { Timer, Trophy, Plus, Trash2, Download, Upload, ChevronDown, ChevronRight, Flag, Save } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Button } from '@/components/ui/Button'
-import { Input, Select } from '@/components/ui/Input'
+import { Input, Select, Textarea } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
@@ -11,10 +11,71 @@ import { RpeSelector } from '@/components/ui/RpeSelector'
 import { useMySwimmer } from '@/hooks/useMySwimmer'
 import { useEnsureMySwimmerRow } from '@/hooks/useEnsureMySwimmerRow'
 import { useTimes, useSplits, useLogTime, useDeleteTime } from '@/hooks/useTimes'
+import { useStravaSessions, useUpdateStravaSessionNotes, type StravaSession } from '@/hooks/useStrava'
 import { formatTime, formatStopwatch, parseTime } from '@/lib/formatTime'
 import { timesToCsv, downloadCsv, parseCsvTimes } from '@/lib/csvUtils'
 import { STROKES, DISTANCES, COURSES, COURSE_LABELS } from '@/types'
 import type { Stroke, Course, SwimTime } from '@/types'
+
+/** One Strava-imported session: shows the auto-generated stats summary
+ * (main_set, read-only) plus an editable box for what was actually done —
+ * Strava only knows total distance/time, not the real sets/stroke. */
+function ImportedSessionRow({ session }: { session: StravaSession }) {
+  const update = useUpdateStravaSessionNotes()
+  const [notes, setNotes] = useState(session.notes ?? '')
+  const dirty = notes !== (session.notes ?? '')
+
+  return (
+    <div className="space-y-2 rounded-component border border-border bg-surface p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium text-text-primary">{session.title}</p>
+          <p className="font-mono text-xs text-text-muted">
+            {new Date(session.date).toLocaleDateString()} · {session.main_set}
+          </p>
+        </div>
+      </div>
+      <Textarea
+        placeholder="What did you actually do? e.g. 8×100 freestyle on 1:30, then a 400 pull…"
+        rows={2}
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+      />
+      {dirty && (
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            leftIcon={<Save className="h-3.5 w-3.5" />}
+            loading={update.isPending}
+            onClick={() => update.mutate({ id: session.id, notes })}
+          >
+            Save
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Recent Strava-synced swims — hidden entirely once there's nothing to show. */
+function StravaImportsCard() {
+  const { data: sessions } = useStravaSessions()
+  if (!sessions || sessions.length === 0) return null
+
+  return (
+    <Card>
+      <CardHeader
+        title="Recent imports"
+        subtitle="Synced from Strava — add what you actually did."
+      />
+      <div className="space-y-3">
+        {sessions.map((s) => (
+          <ImportedSessionRow key={s.id} session={s} />
+        ))}
+      </div>
+    </Card>
+  )
+}
 
 const PAGE_SIZE = 5
 
@@ -257,6 +318,8 @@ export function MyTimesPage() {
           {importResult}
         </p>
       )}
+
+      <StravaImportsCard />
 
       {/* Course filter */}
       <Select
