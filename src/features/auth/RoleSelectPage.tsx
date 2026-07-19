@@ -20,13 +20,17 @@ export function RoleSelectPage() {
   const [selected, setSelected] = useState<Role | null>(null)
   const [level, setLevel] = useState<Level>('beginner')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const submit = async () => {
     if (!selected) return
     setSaving(true)
+    setError(null)
     try {
       await setRole(selected, selected === 'swimmer' ? level : undefined)
       navigate(`/${selected}`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save your role. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -68,6 +72,8 @@ export function RoleSelectPage() {
             <option value="elite">Elite</option>
           </Select>
         )}
+
+        {error && <p className="text-sm text-danger">{error}</p>}
 
         <Button className="w-full" disabled={!selected} loading={saving} onClick={submit}>
           Continue
