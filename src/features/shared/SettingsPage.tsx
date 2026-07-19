@@ -12,7 +12,32 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSwimmers } from '@/hooks/useSwimmers'
 import { useTheme, type Theme } from '@/hooks/useTheme'
 import { useStravaConnection, useSyncStrava, useDisconnectStrava, startStravaConnect } from '@/hooks/useStrava'
+import { useNutritionProfile } from '@/hooks/useNutritionProfile'
+import { NutritionProfileSetup } from './NutritionProfileSetup'
 import { cn } from '@/lib/cn'
+
+/** Edit entry for the nutrition profile (training + preference inputs only —
+ * see NutritionProfileSetup). Setup itself happens inline on the Nutrition
+ * pages; this is just the "editable in settings" access point from the spec. */
+function NutritionSettingsCard() {
+  const { data: profile } = useNutritionProfile()
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Card>
+      <CardHeader
+        title="Nutrition profile"
+        subtitle={profile ? 'Set up — training and preference inputs only.' : 'Not set up yet.'}
+      />
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        {profile ? 'Edit nutrition profile' : 'Set up nutrition profile'}
+      </Button>
+      <Modal open={open} onClose={() => setOpen(false)} title="Nutrition profile">
+        <NutritionProfileSetup initial={profile} onSaved={() => setOpen(false)} />
+      </Modal>
+    </Card>
+  )
+}
 
 /** Connect/sync/disconnect card for Strava — auto-imports pool swims as
  * logged times. Hidden in local mode: there's no backend to hold tokens. */
@@ -242,6 +267,11 @@ export function SettingsPage() {
       await Promise.all([
         supabase.from('messages').delete().eq('sender_id', user.id),
         supabase.from('messages').delete().eq('recipient_id', user.id),
+        // profile_id-scoped regardless of role, and not covered by the
+        // swimmers/coach cascades above.
+        supabase.from('nutrition_profiles').delete().eq('profile_id', user.id),
+        supabase.from('hydration_logs').delete().eq('profile_id', user.id),
+        supabase.from('strava_connections').delete().eq('profile_id', user.id),
       ])
       // Clear PII from profile; full auth deletion requires a server-side admin call
       await supabase.from('profiles').update({
@@ -315,6 +345,14 @@ export function SettingsPage() {
         <div>
           <SectionHeader kicker="Connected apps" />
           <StravaCard />
+        </div>
+      )}
+
+      {/* Nutrition */}
+      {!isLocalMode && (
+        <div>
+          <SectionHeader kicker="Nutrition" />
+          <NutritionSettingsCard />
         </div>
       )}
 

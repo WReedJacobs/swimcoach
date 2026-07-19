@@ -288,3 +288,45 @@ export interface Notification {
   read: boolean
   created_at: string
 }
+
+// ---------- Nutrition ----------
+// Deliberately no weight/BMI/calorie fields anywhere in this domain — inputs
+// are training- and preference-only. See lib/nutritionGuidance.ts.
+export type TrainingVolume = 'recreational' | 'club' | 'high_performance'
+export type TypicalSessionTime = 'morning' | 'afternoon_evening' | 'varies'
+export type AgeBracket = 'under_18' | '18_plus'
+export type DietBase = 'omnivore' | 'vegetarian' | 'vegan'
+export type DietModifier = 'dairy_free'
+export type DietPattern = DietBase | DietModifier
+
+export const TRAINING_VOLUME_LABELS: Record<TrainingVolume, string> = {
+  recreational: 'Recreational (<3 swims/wk)',
+  club: 'Club / age-group (4–8 swims/wk)',
+  high_performance: 'High-performance (9+, or 2x/day)',
+}
+export const TYPICAL_SESSION_TIME_LABELS: Record<TypicalSessionTime, string> = {
+  morning: 'Early morning',
+  afternoon_evening: 'Afternoon / evening',
+  varies: 'Varies',
+}
+export const AGE_BRACKET_LABELS: Record<AgeBracket, string> = {
+  under_18: 'Under 18',
+  '18_plus': '18+',
+}
+
+export interface NutritionProfile {
+  profile_id: string
+  training_volume: TrainingVolume
+  typical_session_time: TypicalSessionTime
+  diet_pattern: DietPattern[]
+  allergies: string | null
+  age_bracket: AgeBracket
+  updated_at: string
+}
+
+export interface HydrationLog {
+  id: string
+  profile_id: string
+  logged_at: string
+  amount_ml: number
+}

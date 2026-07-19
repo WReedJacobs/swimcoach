@@ -74,6 +74,7 @@ const ProfilePage        = lazy(() => import('@/features/swimmer/ProfilePage').t
 const SwimPlannerPage    = lazy(() => import('@/features/swimmer/SwimPlannerPage').then(m => ({ default: m.SwimPlannerPage })))
 const GoalRacePage       = lazy(() => import('@/features/swimmer/GoalRacePage').then(m => ({ default: m.GoalRacePage })))
 const GoalRaceDetailPage = lazy(() => import('@/features/swimmer/GoalRaceDetailPage').then(m => ({ default: m.GoalRaceDetailPage })))
+const SwimmerNutritionPage = lazy(() => import('@/features/swimmer/NutritionPage').then(m => ({ default: m.NutritionPage })))
 
 // Beginner
 const JourneyPage           = lazy(() => import('@/features/beginner/JourneyPage').then(m => ({ default: m.JourneyPage })))
@@ -83,6 +84,7 @@ const GlossaryPage          = lazy(() => import('@/features/beginner/GlossaryPag
 const MilestonesPage        = lazy(() => import('@/features/beginner/MilestonesPage').then(m => ({ default: m.MilestonesPage })))
 const SelfLogPage           = lazy(() => import('@/features/beginner/SelfLogPage').then(m => ({ default: m.SelfLogPage })))
 const FindCoachPage         = lazy(() => import('@/features/beginner/FindCoachPage').then(m => ({ default: m.FindCoachPage })))
+const BeginnerNutritionPage = lazy(() => import('@/features/beginner/NutritionPage').then(m => ({ default: m.NutritionPage })))
 const PoolGuidePage         = lazy(() => import('@/features/beginner/PoolGuidePage').then(m => ({ default: m.PoolGuidePage })))
 const TrainingBasicsPage    = lazy(() => import('@/features/beginner/TrainingBasicsPage').then(m => ({ default: m.TrainingBasicsPage })))
 const FitnessProgramPage    = lazy(() => import('@/features/beginner/FitnessProgramPage').then(m => ({ default: m.FitnessProgramPage })))
@@ -189,6 +191,7 @@ export default function App() {
           <Route path="/swimmer/leaderboard" element={<LeaderboardPage />} />
           <Route path="/swimmer/goal-race" element={<GoalRacePage />} />
           <Route path="/swimmer/goal-race/:goalRaceId" element={<GoalRaceDetailPage />} />
+          <Route path="/swimmer/nutrition" element={<SwimmerNutritionPage />} />
           {/* Reuses the exact same SessionBuilder as /coach/sessions/* — for
               self-coached swimmers (swimmers.coach_id === their own id),
               whose generated/authored sessions they own by the same RLS
@@ -204,6 +207,7 @@ export default function App() {
           <Route path="/beginner/log" element={<SelfLogPage />} />
           <Route path="/beginner/program" element={<FitnessProgramPage />} />
           <Route path="/beginner/find-coach" element={<FindCoachPage />} />
+          <Route path="/beginner/nutrition" element={<BeginnerNutritionPage />} />
           <Route path="/beginner/settings" element={<SettingsPage />} />
           <Route path="/beginner/milestones" element={<MilestonesPage />} />
           <Route path="/beginner/self-guided" element={<SelfGuidedPage />} />

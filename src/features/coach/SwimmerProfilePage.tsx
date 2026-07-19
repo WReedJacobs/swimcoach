@@ -16,6 +16,7 @@ import { useGoals, useDeleteGoal } from '@/hooks/useGoals'
 import { useFeedback, useCreateFeedback, useDeleteFeedback, useToggleFeedbackPin } from '@/hooks/useFeedback'
 import { useCssResultForSwimmer } from '@/hooks/useCssResults'
 import { useSwimmerStatsByUserId } from '@/hooks/useSwimmerStats'
+import { useHasNutritionProfile } from '@/hooks/useNutritionProfile'
 import { formatTime } from '@/lib/formatTime'
 import { STROKES, swimmerName } from '@/types'
 import type { Stroke, SwimTime, Goal, Feedback } from '@/types'
@@ -28,6 +29,7 @@ export function SwimmerProfilePage() {
   const { data: goals } = useGoals(swimmerId)
   const { data: feedback } = useFeedback(swimmerId)
   const { data: cssResult } = useCssResultForSwimmer(swimmerId)
+  const { data: hasNutritionProfile } = useHasNutritionProfile(swimmer?.profile_id)
   const createFeedback = useCreateFeedback()
   const deleteTime = useDeleteTime()
   const deleteGoal = useDeleteGoal()
@@ -68,6 +70,11 @@ export function SwimmerProfilePage() {
           <div className="mt-1 flex items-center gap-2">
             <LevelBadge level={swimmer.level} />
             {swimmer.squad && <span className="text-sm text-text-secondary">{swimmer.squad}</span>}
+            {swimmer.profile_id && (
+              <Badge tone={hasNutritionProfile ? 'green' : 'gray'}>
+                {hasNutritionProfile ? 'Nutrition set up' : 'No nutrition profile'}
+              </Badge>
+            )}
           </div>
           {swimmer.notes && <p className="mt-2 text-sm text-text-secondary">{swimmer.notes}</p>}
         </div>
