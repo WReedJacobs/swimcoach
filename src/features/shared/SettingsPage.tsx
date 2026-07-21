@@ -15,25 +15,27 @@ import { useStravaConnection, useSyncStrava, useDisconnectStrava, startStravaCon
 import { useNutritionProfile } from '@/hooks/useNutritionProfile'
 import { NutritionProfileSetup } from './NutritionProfileSetup'
 import { useSubscription } from '@/hooks/useSubscription'
-import { useCreatePortalSession } from '@/hooks/useCheckout'
+import { useCancelSubscription } from '@/hooks/useCheckout'
 import { cn } from '@/lib/cn'
 
-/** Plan status + self-serve billing management (Stripe Customer Portal).
- * Upgrading itself happens on UpgradePage — this is only for existing
- * subscribers to change/cancel. */
+/** Plan status + self-serve cancellation (via Paystack's subscription API —
+ * no hosted portal to redirect to). Upgrading itself happens on UpgradePage;
+ * this is only for existing subscribers to cancel. */
 function BillingCard() {
   const { profile } = useAuth()
   const { data: subscription } = useSubscription()
-  const portal = useCreatePortalSession()
+  const cancel = useCancelSubscription()
   const [error, setError] = useState<string | null>(null)
+  const [confirmCancel, setConfirmCancel] = useState(false)
   const navigate = useNavigate()
 
-  const openPortal = async () => {
+  const doCancel = async () => {
     setError(null)
     try {
-      await portal.mutateAsync()
+      await cancel.mutateAsync()
+      setConfirmCancel(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not open billing portal')
+      setError(e instanceof Error ? e.message : 'Could not cancel subscription')
     }
   }
 
@@ -47,14 +49,23 @@ function BillingCard() {
       />
       {error && <p className="mb-2 text-sm text-danger">{error}</p>}
       {isSubscribed ? (
-        <Button variant="secondary" loading={portal.isPending} onClick={openPortal}>
-          Manage billing
+        <Button variant="secondary" onClick={() => setConfirmCancel(true)}>
+          Cancel subscription
         </Button>
       ) : (
         <Button onClick={() => navigate(profile?.role === 'coach' ? '/coach/upgrade' : '/swimmer/upgrade')}>
           Upgrade
         </Button>
       )}
+      <Modal open={confirmCancel} onClose={() => setConfirmCancel(false)} title="Cancel subscription?">
+        <p className="text-sm text-text-secondary">
+          You'll keep access until the end of your current billing period, then drop to the free plan.
+        </p>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setConfirmCancel(false)}>Keep subscription</Button>
+          <Button variant="danger" loading={cancel.isPending} onClick={doCancel}>Cancel subscription</Button>
+        </div>
+      </Modal>
     </Card>
   )
 }

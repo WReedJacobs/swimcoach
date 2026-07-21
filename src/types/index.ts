@@ -341,8 +341,9 @@ export interface Subscription {
   plan: Plan
   status: SubscriptionStatus
   current_period_end: string | null
-  stripe_subscription_id: string | null
-  stripe_customer_id: string | null
+  paystack_subscription_code: string | null
+  paystack_customer_code: string | null
+  paystack_email_token: string | null
   created_at: string
   updated_at: string
 }

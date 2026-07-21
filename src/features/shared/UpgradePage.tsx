@@ -8,8 +8,6 @@ import { useSubscription } from '@/hooks/useSubscription'
 import { useCreateCheckoutSession, type BillingInterval } from '@/hooks/useCheckout'
 import type { Plan } from '@/types'
 
-const TRIAL_DAYS = 14
-
 interface PlanDef {
   plan: Plan
   name: string
@@ -19,12 +17,16 @@ interface PlanDef {
   features: string[]
 }
 
+// ZAR — Paystack's South Africa merchant accounts settle in Rand. Round
+// numbers converted from the originally-quoted USD prices, not a live
+// exchange-rate feed; adjust freely by re-running the Paystack Plan setup
+// with new amounts.
 const SWIMMER_PLANS: PlanDef[] = [
   {
     plan: 'ai_coach',
     name: 'AI Coach',
-    monthly: 9.99,
-    yearly: 79,
+    monthly: 189,
+    yearly: 1499,
     blurb: 'A conversational coach grounded in your own logged times and sessions.',
     features: [
       'Ask questions and get answers grounded in your training history',
@@ -39,16 +41,16 @@ const COACH_PLANS: PlanDef[] = [
   {
     plan: 'coach_pro',
     name: 'Coach Pro',
-    monthly: 19,
-    yearly: 180,
+    monthly: 349,
+    yearly: 3499,
     blurb: 'For a growing squad.',
     features: ['Up to 25 swimmers', 'Everything in Free'],
   },
   {
     plan: 'coach_club',
     name: 'Coach Club',
-    monthly: 39,
-    yearly: 360,
+    monthly: 699,
+    yearly: 6999,
     blurb: 'For a full club or team.',
     features: ['Unlimited swimmers', 'Everything in Coach Pro'],
   },
@@ -72,7 +74,7 @@ function PlanCard({ def, interval }: { def: PlanDef; interval: BillingInterval }
     <Card className="flex flex-col">
       <CardHeader title={def.name} subtitle={def.blurb} />
       <div className="mb-4">
-        <span className="font-mono text-3xl font-semibold text-text-primary">${price}</span>
+        <span className="font-mono text-3xl font-semibold text-text-primary">R{price.toLocaleString()}</span>
         <span className="text-sm text-text-secondary"> / {interval === 'month' ? 'mo' : 'yr'}</span>
       </div>
       <ul className="mb-5 flex-1 space-y-2">
@@ -85,7 +87,7 @@ function PlanCard({ def, interval }: { def: PlanDef; interval: BillingInterval }
       </ul>
       {error && <p className="mb-2 text-sm text-danger">{error}</p>}
       <Button leftIcon={<Sparkles className="h-4 w-4" />} loading={checkout.isPending} onClick={start}>
-        Start {TRIAL_DAYS}-day free trial
+        Subscribe
       </Button>
     </Card>
   )
