@@ -21,6 +21,13 @@ interface StravaActivity {
   pool_length?: number // metres, only present for pool swims
 }
 
+/** Thrown when Strava's refresh_token itself is no longer valid (revoked by
+ * the athlete, expired, app de-authorized) — no amount of retrying fixes
+ * this, the athlete has to reconnect. Distinct from a transient fetch
+ * failure so the caller can delete the dead connection and tell the
+ * frontend to prompt a reconnect instead of just showing a generic error. */
+class StravaReconnectRequiredError extends Error {}
+
 /** Refresh the stored access token if it's expired or about to expire. */
 async function ensureFreshToken(profileId: string, conn: {
   access_token: string
@@ -42,7 +49,18 @@ async function ensureFreshToken(profileId: string, conn: {
       grant_type: 'refresh_token',
     }),
   })
-  if (!res.ok) throw new Error(`Strava token refresh failed: ${await res.text()}`)
+  if (!res.ok) {
+    const detail = await res.text()
+    // Strava returns 400 with an "invalid_grant"-style error when the
+    // refresh_token itself is dead — the one case retrying can't fix.
+    if (res.status === 400 || res.status === 401) {
+      await adminClient.from('strava_connections').delete().eq('profile_id', profileId)
+      throw new StravaReconnectRequiredError(
+        'Your Strava connection has expired — reconnect it from Settings to keep syncing.',
+      )
+    }
+    throw new Error(`Strava token refresh failed: ${detail}`)
+  }
   const data = await res.json()
 
   await adminClient
@@ -238,6 +256,12 @@ Deno.serve(async (req) => {
     })
   } catch (err) {
     console.error('strava-sync error:', err instanceof Error ? err.stack ?? err.message : JSON.stringify(err))
+    if (err instanceof StravaReconnectRequiredError) {
+      return new Response(JSON.stringify({ error: err.message, code: 'reconnect_required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

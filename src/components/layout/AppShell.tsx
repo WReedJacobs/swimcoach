@@ -8,6 +8,7 @@ import { OceanBackground } from '@/components/OceanBackground'
 import { useMySwimmer } from '@/hooks/useMySwimmer'
 import { useSwimmerRealtime } from '@/hooks/useSwimmerRealtime'
 import { useOfflineSync } from '@/hooks/useOfflineSync'
+import { useStravaAutoSync } from '@/hooks/useStravaAutoSync'
 
 function titleForPath(role: Role | null, pathname: string): string {
   const items = navForRole(role)
@@ -32,6 +33,14 @@ function OfflineSyncLayer() {
   return null
 }
 
+/** Null-render component that silently syncs Strava in the background on
+ * app open, if connected and due (see useStravaAutoSync). Available to any
+ * role — Strava can be connected from Settings regardless of role. */
+function StravaAutoSyncLayer() {
+  useStravaAutoSync()
+  return null
+}
+
 export function AppShell({ role }: { role: Role | null }) {
   const { pathname } = useLocation()
   return (
@@ -39,6 +48,7 @@ export function AppShell({ role }: { role: Role | null }) {
       <OceanBackground />
       {role === 'swimmer' && <SwimmerRealtimeLayer />}
       <OfflineSyncLayer />
+      <StravaAutoSyncLayer />
       <Sidebar role={role} />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar title={titleForPath(role, pathname)} />

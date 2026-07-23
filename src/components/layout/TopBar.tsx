@@ -1,11 +1,40 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, LogIn, Bell, Trophy, Info, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { LogOut, LogIn, Bell, Trophy, Info, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/hooks/useAuth'
 import { useNotifications, type InAppNotif } from '@/context/NotificationContext'
+import { useStravaConnection, useSyncStrava } from '@/hooks/useStrava'
+import { formatRelativeTime } from '@/lib/relativeTime'
 import { cn } from '@/lib/cn'
+
+/** Persistent sync control, visible on every page once Strava is connected —
+ * previously this only lived as a button buried in Settings. Icon spins
+ * while syncing; the title attr doubles as the "last synced X ago" status
+ * the profile-page-only button never surfaced anywhere obvious. */
+function StravaSyncButton() {
+  const { data: connection } = useStravaConnection()
+  const sync = useSyncStrava()
+
+  if (!connection) return null
+
+  const label = sync.isPending
+    ? 'Syncing Strava…'
+    : `Strava · synced ${formatRelativeTime(connection.last_synced_at)}`
+
+  return (
+    <button
+      onClick={() => sync.mutate()}
+      disabled={sync.isPending}
+      className="rounded-full p-1.5 text-text-secondary transition-colors hover:bg-surface hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed"
+      aria-label={label}
+      title={label}
+    >
+      <RefreshCw className={cn('h-5 w-5', sync.isPending && 'animate-spin')} />
+    </button>
+  )
+}
 
 function notifIcon(type: InAppNotif['type']) {
   switch (type) {
@@ -98,6 +127,8 @@ export function TopBar({ title }: { title: string }) {
               <p className="text-sm font-medium text-text-primary">{profile.full_name || 'You'}</p>
               <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">{profile.role}</p>
             </div>
+
+            <StravaSyncButton />
 
             {/* Notification bell */}
             <div className="relative" ref={panelRef}>

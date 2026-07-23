@@ -11,7 +11,7 @@ import { supabase, isLocalMode } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { useSwimmers } from '@/hooks/useSwimmers'
 import { useTheme, type Theme } from '@/hooks/useTheme'
-import { useStravaConnection, useSyncStrava, useDisconnectStrava, startStravaConnect } from '@/hooks/useStrava'
+import { useStravaConnection, useDisconnectStrava, startStravaConnect } from '@/hooks/useStrava'
 import { useNutritionProfile } from '@/hooks/useNutritionProfile'
 import { NutritionProfileSetup } from './NutritionProfileSetup'
 import { useSubscription } from '@/hooks/useSubscription'
@@ -93,25 +93,15 @@ function NutritionSettingsCard() {
   )
 }
 
-/** Connect/sync/disconnect card for Strava — auto-imports pool swims as
- * logged times. Hidden in local mode: there's no backend to hold tokens. */
+/** Connect/disconnect card for Strava — auto-imports pool swims as logged
+ * times. Syncing itself now lives in TopBar (a persistent, global control)
+ * rather than a button buried here; this card is just setup/teardown.
+ * Hidden in local mode: there's no backend to hold tokens. */
 function StravaCard() {
   const { data: connection } = useStravaConnection()
-  const sync = useSyncStrava()
   const disconnect = useDisconnectStrava()
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   if (isLocalMode) return null
-
-  const handleSync = async () => {
-    setMsg(null)
-    try {
-      const res = await sync.mutateAsync()
-      setMsg({ ok: true, text: `Imported ${res.imported} new swim${res.imported === 1 ? '' : 's'}` })
-    } catch (e) {
-      setMsg({ ok: false, text: e instanceof Error ? e.message : 'Sync failed' })
-    }
-  }
 
   return (
     <Card>
@@ -123,28 +113,15 @@ function StravaCard() {
             : 'Auto-import your pool swims as logged times.'
         }
       />
-      {msg && (
-        <p className={`mb-3 text-sm ${msg.ok ? 'text-secondary' : 'text-danger'}`}>{msg.text}</p>
-      )}
       {connection ? (
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="secondary"
-            leftIcon={<RefreshCw className="h-4 w-4" />}
-            loading={sync.isPending}
-            onClick={handleSync}
-          >
-            Sync now
-          </Button>
-          <Button
-            variant="outline"
-            leftIcon={<Unlink className="h-4 w-4" />}
-            loading={disconnect.isPending}
-            onClick={() => disconnect.mutate()}
-          >
-            Disconnect
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          leftIcon={<Unlink className="h-4 w-4" />}
+          loading={disconnect.isPending}
+          onClick={() => disconnect.mutate()}
+        >
+          Disconnect
+        </Button>
       ) : (
         <Button leftIcon={<Activity className="h-4 w-4" />} onClick={() => startStravaConnect()}>
           Connect Strava

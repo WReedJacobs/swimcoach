@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { toast } from '@/context/ToastContext'
 import { useAuth } from './useAuth'
 
 export interface StravaConnection {
@@ -75,7 +76,8 @@ export function useStravaOAuthExchange() {
 
 /** Pulls recent Strava swims in as sessions (see strava-sync) — each becomes
  * a session with an auto-generated main_set summary, a linked times row, and
- * a completed session_assignment. */
+ * a completed session_assignment. Used for both the manual "sync now"
+ * control and the auto-sync-on-open check (useStravaAutoSync). */
 export function useSyncStrava() {
   const { user } = useAuth()
   const qc = useQueryClient()
@@ -85,11 +87,21 @@ export function useSyncStrava() {
       if (error) throw error
       return data as { imported: number }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['strava-connection', user?.id] })
       qc.invalidateQueries({ queryKey: ['strava-sessions', user?.id] })
       qc.invalidateQueries({ queryKey: ['times'] })
       qc.invalidateQueries({ queryKey: ['my-swimmer', user?.id] })
+      if (data.imported > 0) {
+        toast.success(`Synced ${data.imported} new swim${data.imported === 1 ? '' : 's'} from Strava`)
+      }
+    },
+    onError: () => {
+      // Covers the reconnect-required case (strava-sync deletes the dead
+      // connection server-side before failing) — refetch so TopBar/Settings
+      // immediately reflect "disconnected" instead of stale "connected"
+      // state until the next unrelated refetch happens to run.
+      qc.invalidateQueries({ queryKey: ['strava-connection', user?.id] })
     },
   })
 }
